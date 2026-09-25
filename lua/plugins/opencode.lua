@@ -58,6 +58,7 @@ return {
     {
       "MeanderingProgrammer/render-markdown.nvim",
       opts = {
+        render_modes = { 'n', 'c' },
         anti_conceal = { enabled = false },
         file_types = { "markdown", "opencode_output" },
       },
