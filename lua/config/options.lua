@@ -29,14 +29,13 @@ vim.opt.autoread = true
 
 -- Automatically check if buffers were modified on disk and reload them
 vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
-    group = vim.api.nvim_create_augroup("AutoRefreshBuffers", { clear = true }),
-    callback = function()
-        if vim.fn.getcmdwintype() == "" then
-            vim.cmd("checktime")
-        end
-    end,
+  group = vim.api.nvim_create_augroup("AutoRefreshBuffers", { clear = true }),
+  callback = function()
+    if vim.fn.getcmdwintype() == "" then
+      vim.cmd("checktime")
+    end
+  end,
 })
-
 
 -- Aesthetics
 vim.opt.title = true
@@ -45,7 +44,7 @@ vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 -- GUI Visuals
 if vim.g.neovide or vim.g.nvui or vim.fn.has("gui_running") == 1 then
-    vim.opt.guifont = "JetBrainsMono Nerd Font:h12"
+  vim.opt.guifont = "JetBrainsMono Nerd Font:h12"
 end
 
 -- LSP Progress Visibility
@@ -58,29 +57,29 @@ vim.g.lsp_progress_show = false
 -- all produce the same result as <leader>f.
 do
   local indent_mod = require("config.indent")
-  _G.WebIndent = indent_mod.get_indent  -- indentexpr string referansı için global olmalı
+  _G.WebIndent = indent_mod.get_indent -- indentexpr string referansı için global olmalı
 end
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "html", "htmlangular", "javascript", "typescript", "javascriptreact", "typescriptreact" },
   callback = function()
-    vim.opt_local.indentexpr  = "v:lua.WebIndent()"
-    vim.opt_local.autoindent  = true
+    vim.opt_local.indentexpr = "v:lua.WebIndent()"
+    vim.opt_local.autoindent = true
     vim.opt_local.smartindent = false
     -- Re-indent tetikleyen karakterler: }, ), ], kapanış tag için >, else, catch
-    vim.opt_local.indentkeys  = "0{,0},0(,0),0[,0],0<,0>,:,!^F,o,O,0=else,0=catch"
+    vim.opt_local.indentkeys = "0{,0},0(,0),0[,0],0<,0>,:,!^F,o,O,0=else,0=catch"
 
     -- Map filetype -> prettier parser
     local parsers = {
-      javascript      = "babel",
+      javascript = "babel",
       javascriptreact = "babel",
-      typescript      = "typescript",
+      typescript = "typescript",
       typescriptreact = "babel-ts",
-      html            = "html",
+      html = "html",
     }
     local parser = parsers[vim.bo.filetype]
-    -- We removed equalprg assignment because prettier outputs errors directly to the buffer 
-    -- if there is a syntax error (like unclosed bracket). 
+    -- We removed equalprg assignment because prettier outputs errors directly to the buffer
+    -- if there is a syntax error (like unclosed bracket).
     -- conform.nvim already handles formatting safely.
     -- vim.opt_local.equalprg = "prettier --parser " .. parser .. " --tab-width 4"
   end,
@@ -117,5 +116,3 @@ vim.filetype.add({
     end,
   },
 })
-
-

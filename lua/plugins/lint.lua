@@ -22,7 +22,7 @@ return {
               local dir = vim.fs.dirname(filepath)
               -- Check if this is an Angular project by searching upwards for angular.json or project.json
               local is_angular = #vim.fs.find({ "angular.json", "project.json" }, { path = dir, upward = true }) > 0
-              
+
               local filtered = {}
               for _, diag in ipairs(diagnostics) do
                 local keep = true
@@ -60,6 +60,5 @@ return {
         end,
       })
     end,
-  }
+  },
 }
-

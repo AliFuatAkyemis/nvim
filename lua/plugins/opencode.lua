@@ -15,7 +15,7 @@ return {
           ["<leader>out"] = { "toggle_tool_output", desc = "Toggle tool output" },
           ["<leader>our"] = { "toggle_reasoning_output", desc = "Toggle reasoning output" },
           ["<leader>oum"] = { "toggle_max_messages", desc = "Toggle max messages" },
-        }
+        },
       },
 
       ui = {
@@ -55,15 +55,6 @@ return {
     })
   end,
   dependencies = {
-    {
-      "MeanderingProgrammer/render-markdown.nvim",
-      opts = {
-        render_modes = { 'n', 'c' },
-        anti_conceal = { enabled = false },
-        file_types = { "markdown", "opencode_output" },
-      },
-      ft = { "markdown", "opencode_output" },
-    },
     "nvim-telescope/telescope.nvim",
     "hrsh7th/nvim-cmp",
   },

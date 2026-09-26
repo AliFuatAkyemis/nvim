@@ -4,8 +4,8 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
       options = {
-        theme            = "auto",
-        globalstatus     = true,
+        theme = "auto",
+        globalstatus = true,
         disabled_filetypes = {
           statusline = { "neo-tree", "lazy", "mason" },
         },

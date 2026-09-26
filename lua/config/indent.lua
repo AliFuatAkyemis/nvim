@@ -7,9 +7,20 @@ local M = {}
 -- HTML'deki "void element" (boş element) listesi. Bu etiketlerin sonuna kapatma takısı
 -- konulmasa bile (HTML5 standardı) alt satırda girinti (indent) verilmemelidir.
 local void_elements = {
-  area = true, base = true, br = true, col = true, embed = true,
-  hr = true, img = true, input = true, link = true, meta = true,
-  param = true, source = true, track = true, wbr = true
+  area = true,
+  base = true,
+  br = true,
+  col = true,
+  embed = true,
+  hr = true,
+  img = true,
+  input = true,
+  link = true,
+  meta = true,
+  param = true,
+  source = true,
+  track = true,
+  wbr = true,
 }
 
 -- Detect Treesitter language at a specific line
@@ -19,22 +30,24 @@ local function get_lang_at_line(lnum)
   if not ok or not parser then
     return vim.bo[bufnr].filetype
   end
-  
+
   pcall(parser.parse, parser, true)
-  
+
   local row = lnum - 1
-  local tree = parser:language_for_range({row, 0, row, 0})
+  local tree = parser:language_for_range({ row, 0, row, 0 })
   if tree then
     return tree:lang()
   end
-  
+
   return vim.bo[bufnr].filetype
 end
 
 -- Satır sonundaki (veya önceki satırlardaki) tag ismini bulup void element olup olmadığını kontrol eder.
 local function is_not_void_element(prev_lnum)
   local line = vim.fn.getline(prev_lnum)
-  if not line:match(">%s*$") then return true end
+  if not line:match(">%s*$") then
+    return true
+  end
 
   local lnum = prev_lnum
   while lnum > 0 do
@@ -58,8 +71,12 @@ local function is_not_void_element(prev_lnum)
     end
 
     -- Eğer satırda `>` karakteri varsa ve bu başlangıç satırı değilse taramayı durdurabiliriz
-    if lnum ~= prev_lnum and cur_line:match(">") then break end
-    if prev_lnum - lnum > 10 then break end
+    if lnum ~= prev_lnum and cur_line:match(">") then
+      break
+    end
+    if prev_lnum - lnum > 10 then
+      break
+    end
     lnum = lnum - 1
   end
 
@@ -86,51 +103,51 @@ local rules = {
   -- Eğer önceki satır açılışla bitiyor ve mevcut satır kapanışla başlıyorsa,
   -- aynı hizada kalmalıdır (outdent uygulanmaz).
   {
-    mode       = "html",
-    before     = ">%s*$",
+    mode = "html",
+    before = ">%s*$",
     before_not = { "/>%s*$", "</[%w%-%.:]+>%s*$" },
-    cond       = is_not_void_element,
-    current    = "^%s*</",
-    action     = "none",
+    cond = is_not_void_element,
+    current = "^%s*</",
+    action = "none",
   },
-  { before = "{%s*$",  current = "^%s*}",  action = "none" },
+  { before = "{%s*$", current = "^%s*}", action = "none" },
   { mode = "js", before = "%(%s*$", current = "^%s*%)", action = "none" },
   { mode = "js", before = "%[%s*$", current = "^%s*%]", action = "none" },
 
   -- ── Kapanış → outdent ────────────────────────────────────────────────────
   -- Mevcut satır kapanış ile başlıyorsa bir seviye geri al (outdent)
   { mode = "html", current = "^%s*</", action = "outdent" },
-  { current = "^%s*}",  action = "outdent" },
+  { current = "^%s*}", action = "outdent" },
   { mode = "js", current = "^%s*%)", action = "outdent" },
   { mode = "js", current = "^%s*%]", action = "outdent" },
   { mode = "html", current = "^%s*/>", action = "outdent" },
-  { mode = "html", current = "^%s*>",  action = "outdent" },
+  { mode = "html", current = "^%s*>", action = "outdent" },
   { mode = "html", current = "^%s*['\"]%s*$", action = "outdent" },
 
   -- ── Açılış → indent ──────────────────────────────────────────────────────
   -- Önceki satır açık tag ile bitiyorsa: <head>, <div class="x">
   -- Hariç: /> (self-closing)  ve  </tag> (closing tag)
   {
-    mode       = "html",
-    before     = ">%s*$",
+    mode = "html",
+    before = ">%s*$",
     before_not = { "/>%s*$", "</[%w%-%.:]+>%s*$" },
-    cond       = is_not_void_element,
-    action     = "indent",
+    cond = is_not_void_element,
+    action = "indent",
   },
   -- Önceki satırda kapatılmamış etiket açılışı varsa (örn: <li, <div class="x")
   {
-    mode       = "html",
-    cond       = is_unclosed_tag,
-    action     = "indent",
+    mode = "html",
+    cond = is_unclosed_tag,
+    action = "indent",
   },
   -- Önceki satır tırnakla açılan bir değer ataması ise (örn: style=", class=")
   {
-    mode       = "html",
-    before     = "=%s*['\"]%s*$",
-    action     = "indent",
+    mode = "html",
+    before = "=%s*['\"]%s*$",
+    action = "indent",
   },
   -- Önceki satır { ile bitiyorsa
-  { before = "{%s*$",  action = "indent" },
+  { before = "{%s*$", action = "indent" },
   -- Önceki satır ( ile bitiyorsa
   { mode = "js", before = "%(%s*$", action = "indent" },
   -- Önceki satır [ ile bitiyorsa
@@ -138,18 +155,25 @@ local rules = {
 }
 
 function M.get_indent()
-  local lnum      = vim.v.lnum
+  local lnum = vim.v.lnum
   local prev_lnum = vim.fn.prevnonblank(lnum - 1)
-  if prev_lnum == 0 then return 0 end
+  if prev_lnum == 0 then
+    return 0
+  end
 
-  local prev_line    = vim.fn.getline(prev_lnum)
+  local prev_line = vim.fn.getline(prev_lnum)
   local current_line = vim.fn.getline(lnum)
-  local base_indent  = vim.fn.indent(prev_lnum)
-  local sw           = vim.fn.shiftwidth()
+  local base_indent = vim.fn.indent(prev_lnum)
+  local sw = vim.fn.shiftwidth()
 
   local lang = get_lang_at_line(lnum)
   local is_html_mode = (lang == "html" or lang == "angular" or lang == "htmlangular")
-  local is_js_mode = (lang == "typescript" or lang == "javascript" or lang == "typescriptreact" or lang == "javascriptreact")
+  local is_js_mode = (
+    lang == "typescript"
+    or lang == "javascript"
+    or lang == "typescriptreact"
+    or lang == "javascriptreact"
+  )
 
   for _, rule in ipairs(rules) do
     -- Filter rules by language mode
@@ -167,9 +191,7 @@ function M.get_indent()
       -- before_not: hiçbiri eşleşmemeli (tablo veya string kabul eder)
       local before_not_ok = true
       if rule.before_not ~= nil then
-        local patterns = type(rule.before_not) == "table"
-          and rule.before_not
-          or { rule.before_not }
+        local patterns = type(rule.before_not) == "table" and rule.before_not or { rule.before_not }
         for _, pat in ipairs(patterns) do
           if prev_line:match(pat) then
             before_not_ok = false
@@ -185,14 +207,20 @@ function M.get_indent()
       local cond_ok = (rule.cond == nil) or rule.cond(prev_lnum, lnum)
 
       if before_ok and before_not_ok and current_ok and cond_ok then
-        if rule.action == "indent"  then return base_indent + sw end
-        if rule.action == "outdent" then return math.max(0, base_indent - sw) end
-        if rule.action == "none"    then return base_indent end
+        if rule.action == "indent" then
+          return base_indent + sw
+        end
+        if rule.action == "outdent" then
+          return math.max(0, base_indent - sw)
+        end
+        if rule.action == "none" then
+          return base_indent
+        end
       end
     end
   end
 
-  return base_indent  -- default: önceki satırla aynı hiza (autoindent)
+  return base_indent -- default: önceki satırla aynı hiza (autoindent)
 end
 
 return M
