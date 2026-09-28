@@ -24,11 +24,17 @@ return {
       css = { "prettier" },
       json = { "prettier" },
       yaml = { "prettier" },
-      markdown = { "prettier" },
       kotlin = { "ktlint" },
+      -- NOTE: markdown kasıtlı olarak listelenmez. Obsidian tarzı ham yazım
+      -- için prettier otomatik formatlaması kaldırıldı (bkz. format_on_save).
     },
     format_on_save = function(bufnr)
       local ft = vim.bo[bufnr].filetype
+      -- Markdown hiç otomatik biçimlendirilmez (Obsidian gibi ham yazılır)
+      -- prettier markdown'ı 80 sütuna yeniden sarar ve emphasis toggle'ı bozar.
+      if ft == "markdown" or ft == "opencode_output" then
+        return nil
+      end
       local timeout = 500
       if ft == "kotlin" or ft == "java" then
         timeout = 3000
