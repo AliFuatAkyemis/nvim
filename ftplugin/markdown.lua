@@ -27,7 +27,9 @@ map("i", "<C-l>", function() M.toggle("highlight", "i") end, "Vurgu")
 
 -- ----------------------------------------------------------------- link
 map({ "n", "v", "i" }, "<C-k>", function() M.insert_link() end, "Link ekle")
-map({ "n", "v", "i" }, "<leader>l", function() M.insert_wikilink() end, "Wikilink")
+-- Wikilink yalnızca normal/visual: insert modda <leader>=space olduğundan her
+-- boşluk tuşu "bekleyen mapping öneki"ne döner ve gecikmeli yazılır.
+map({ "n", "v" }, "<leader>l", function() M.insert_wikilink() end, "Wikilink")
 
 -- ------------------------------------------------------------- başlık
 for level = 1, 6 do
