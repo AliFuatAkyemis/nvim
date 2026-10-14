@@ -227,6 +227,8 @@ local function toggle_visual(style)
   end
   set_visual_text(g, vim.split(newsel, "\n", { plain = true }))
   reselect(g, #sel, style.left, style.right, added)
+  -- Vurgu uygulandıktan sonra visual moddan çık (normal moda dön).
+  vim.cmd("normal! \27")
 end
 
 -- ------------------------------------------------------------- span bulma
@@ -326,7 +328,13 @@ local function toggle_normal_or_insert(style, insert)
     return
   end
 
-  local s, e = token_range(line, c)
+  -- Normal modda imleç blok şeklindedir ve karakterin "üstündedir"; kullanıcı
+  -- bir kelimeyi vurgulamak için bloğu kelimenin önündeki boşluğa/karaktere
+  -- koyar. Bu yüzden hedef, imlecin bir sağındaki karakterin kelimesidir.
+  -- Insert modda imleç zaten karakterler arasındaki boşlukta olduğundan
+  -- mevcut konum kullanılır.
+  local target = insert and c or (c + 1)
+  local s, e = token_range(line, target)
   if s then
     wrap_token(style, lnum, s, e, insert)
   else
