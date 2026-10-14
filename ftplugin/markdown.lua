@@ -39,12 +39,51 @@ end
 -- --------------------------------------------------------------- checkbox
 map({ "n", "i" }, "<C-Enter>", M.toggle_checkbox, "Checkbox çevir")
 
+-- ------------------------------------------------------------------ liste
+-- Enter: bulunulan listenin türüne göre sonraki maddeyi açar.
+-- Shift+Enter: aynı maddeyi metin hizasında alt satırda sürdürür.
+-- cmp/autopairs davranışı korunur: önce tamamlama onayı, sonra liste, aksi
+-- halde mevcut insert <CR> davranışı (autopairs pair-split / düz satır).
+local function list_cr()
+  local ok_cmp, cmp = pcall(require, "cmp")
+  if ok_cmp and cmp.visible() and cmp.get_active_entry() then
+    cmp.confirm({ select = true })
+    return
+  end
+  if M.new_list_item() then
+    return
+  end
+  local ok_np, np = pcall(require, "nvim-autopairs")
+  if ok_np then
+    vim.api.nvim_feedkeys(np.autopairs_cr(), "n", false)
+  else
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false)
+  end
+end
+
+local function list_shift_cr()
+  local ok_cmp, cmp = pcall(require, "cmp")
+  if ok_cmp and cmp.visible() and cmp.get_active_entry() then
+    cmp.confirm({ select = true })
+    return
+  end
+  if M.soft_break() then
+    return
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false)
+end
+
+map("i", "<CR>", list_cr, "Sonraki madde / Enter")
+map("i", "<S-CR>", list_shift_cr, "Madde içi satır (Shift+Enter)")
+
 -- ----------------------------------------------------------------- alıntı
 map({ "n", "v" }, "<leader>q", M.toggle_quote, "Alıntı")
 
--- NOTE: <CR> (smart_action) ve ]o/[o (nav_link) mapping'lerini obsidian.nvim
--- kendisi kurar; burada tekrarlanmaz (çift tanım/örgün kaynak karışıklığı
--- olmasın). gf varsayılan davranışı korunur; link takibi <CR> ile yapılır.
+-- NOTE: Normal-mod <CR> (smart_action) ve ]o/[o (nav_link) mapping'lerini
+-- obsidian.nvim kendisi kurar; burada tekrarlanmaz (çift tanım/örgün kaynak
+-- karışıklığı olmasın). Insert-mod <CR>/<S-CR> ise liste davranışı için
+-- buffer-local olarak yukarıda tanımlanır. gf varsayılan davranışı korunur;
+-- link takibi normal modda <CR> ile yapılır.
 
 -- ----------------------------------------------------------------- Tab
 -- Neovim "CTRL-I ancak iki tuş da map edilirse Tab'dan ayrılır" kuralı:

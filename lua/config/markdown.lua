@@ -515,4 +515,150 @@ function M.insert_wikilink()
   end
 end
 
+-- --------------------------------------------------------------- liste
+-- Markdown liste maddelerinde Enter (sonraki madde) ve Shift+Enter
+-- (aynı maddeye metin hizasında devam) davranışı.
+
+-- Satırdaki liste önekini çözümler. Döner: nil ya da
+-- { kind = "ordered"|"bullet"|"checkbox", indent, text, ... }.
+-- `text`, önekten sonraki (girinti/işaret dışı) içeriktir; boş madde "" olur.
+local function parse_list_prefix(line)
+  if not line or line == "" then
+    return nil
+  end
+  local indent, bullet, gap, state, sep, text =
+    line:match("^(%s*)([-*+])(%s+)%[([%sxX>~!])%](%s*)(.*)$")
+  if indent then
+    return { kind = "checkbox", indent = indent, bullet = bullet, gap = gap, sep = sep, text = text }
+  end
+  local oi, num, delim, ogap, otext = line:match("^(%s*)(%d+)([.)])(%s+)(.*)$")
+  if oi then
+    return { kind = "ordered", indent = oi, number = tonumber(num), delim = delim, gap = ogap, text = otext }
+  end
+  local oi2, num2, delim2 = line:match("^(%s*)(%d+)([.)])%s*$")
+  if oi2 then
+    return { kind = "ordered", indent = oi2, number = tonumber(num2), delim = delim2, gap = "", text = "" }
+  end
+  local bi, bbullet, bgap, btext = line:match("^(%s*)([-*+])(%s+)(.*)$")
+  if bi then
+    return { kind = "bullet", indent = bi, bullet = bbullet, gap = bgap, text = btext }
+  end
+  local bi2, bbullet2 = line:match("^(%s*)([-*+])%s*$")
+  if bi2 then
+    return { kind = "bullet", indent = bi2, bullet = bbullet2, gap = "", text = "" }
+  end
+  return nil
+end
+
+-- Önek uzunluğu (içeriğin başladığı bayt sütunu).
+local function content_col(line, p)
+  return #line - #p.text
+end
+
+-- `row` satırı (1-bazlı) bir fenced kod bloğunun içinde mi?
+local function in_code_fence(bufnr, row)
+  if row <= 1 then
+    return false
+  end
+  local open = false
+  for _, l in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, row - 1, false)) do
+    local t = l:gsub("^%s*", "")
+    if t:match("^```") or t:match("^~~~") then
+      open = not open
+    end
+  end
+  return open
+end
+
+-- Geçerli satırın ait olduğu maddenin içerik sütununu bulur (bayt).
+-- Satır bir maddeyse kendi sütunu; girintili devam satırıysa yukarıdaki madde.
+local function find_content_col(bufnr, row, line)
+  local p = parse_list_prefix(line)
+  if p then
+    return content_col(line, p)
+  end
+  local cur_indent = #(line:match("^%s*") or "")
+  if cur_indent == 0 then
+    return nil
+  end
+  for r = row - 1, 1, -1 do
+    local l = vim.api.nvim_buf_get_lines(bufnr, r - 1, r, false)[1] or ""
+    if l:match("^%s*$") then
+      return nil
+    end
+    local pp = parse_list_prefix(l)
+    if pp then
+      local cc = content_col(l, pp)
+      return cur_indent >= cc and cc or nil
+    end
+  end
+  return nil
+end
+
+-- Enter: imleç satır sonundaysa bulunulan listenin türüne göre bir sonraki
+-- maddeyi açar. Boş maddede işareti kaldırıp listeyi bitirir.
+-- İşlediyse true, aksi halde false döner (çağıran normal Enter'a düşer).
+function M.new_list_item()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cur = vim.api.nvim_win_get_cursor(0)
+  local row, col = cur[1], cur[2]
+  local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ""
+  if col < #line then
+    return false
+  end
+  if in_code_fence(bufnr, row) then
+    return false
+  end
+  local p = parse_list_prefix(line)
+  if not p then
+    return false
+  end
+  if (p.text or ""):match("^%s*$") then
+    -- Boş madde: işareti kaldır, girintiyi koru, listeyi bitir.
+    vim.api.nvim_buf_set_lines(bufnr, row - 1, row, false, { p.indent })
+    vim.api.nvim_win_set_cursor(0, { row, #p.indent })
+    return true
+  end
+  local marker
+  if p.kind == "ordered" then
+    marker = string.format("%s%d%s%s", p.indent, p.number + 1, p.delim, p.gap)
+  elseif p.kind == "checkbox" then
+    marker = p.indent .. p.bullet .. p.gap .. "[ ]" .. (p.sep or "")
+  else
+    marker = p.indent .. p.bullet .. p.gap
+  end
+  vim.api.nvim_buf_set_lines(bufnr, row, row, false, { marker })
+  vim.api.nvim_win_set_cursor(0, { row + 1, #marker })
+  return true
+end
+
+-- Shift+Enter: aynı maddeyi alt satırda, içerik sütununa hizalı biçimde
+-- sürdürür. Boş girintili devam satırındaysa girintiyi kaldırır (listeden
+-- görsel çıkış). İşlediyse true döner.
+function M.soft_break()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cur = vim.api.nvim_win_get_cursor(0)
+  local row, col = cur[1], cur[2]
+  local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ""
+  if in_code_fence(bufnr, row) then
+    return false
+  end
+  local cc = find_content_col(bufnr, row, line)
+  if not cc then
+    return false
+  end
+  if line:match("^%s*$") and #line == cc and col >= #line then
+    vim.api.nvim_buf_set_lines(bufnr, row - 1, row, false, { "" })
+    vim.api.nvim_win_set_cursor(0, { row, 0 })
+    return true
+  end
+  local before = line:sub(1, col)
+  local after = line:sub(col + 1)
+  local indent = string.rep(" ", cc)
+  vim.api.nvim_buf_set_lines(bufnr, row - 1, row, false, { before })
+  vim.api.nvim_buf_set_lines(bufnr, row, row, false, { indent .. after })
+  vim.api.nvim_win_set_cursor(0, { row + 1, #indent })
+  return true
+end
+
 return M
