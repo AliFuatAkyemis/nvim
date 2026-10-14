@@ -229,16 +229,109 @@ local function toggle_visual(style)
   reselect(g, #sel, style.left, style.right, added)
 end
 
+-- ------------------------------------------------------------- span bulma
+-- İmleci çevreleyen en içteki L...R bloğunu bulur (aynı satırda).
+-- Dönüş: { opener, inner_s, closer } (0-bazlı bayt) ya da nil.
+-- Simetrik delimiter varsayar (tüm stiller öyle). Çok karakterli delimiter'da
+-- (örn. "**") bitişik aynı karakterli koşular delimiter sayılmaz; böylece
+-- ***bold italic*** gibi üçlü kombinasyonlar yanlış eşleşmez (bozulmaz).
+local function find_span(line, c, style)
+  local d = style.left
+  if d ~= style.right then
+    return nil
+  end
+  local len = #d
+  local c1 = d:sub(1, 1)
+  -- Bitişik boş çift: `… d | d …` (örn. henüz yazılmamış `**|**`). Genel
+  -- tarayıcı bunu tek bir `****` koşusu olarak görüp atlar, o yüzden burada
+  -- ayrıca yakalanır.
+  if c >= len
+    and line:sub(c - len + 1, c) == d
+    and line:sub(c + 1, c + len) == d
+  then
+    return { opener = c - len, inner_s = c, closer = c }
+  end
+  local occ = {}
+  local init = 1
+  while true do
+    local s = line:find(d, init, true)
+    if not s then
+      break
+    end
+    local before = s > 1 and line:sub(s - 1, s - 1) or ""
+    local after = line:sub(s + len, s + len)
+    if before ~= c1 and after ~= c1 then
+      occ[#occ + 1] = s -- 1-bazlı başlangıç
+    end
+    init = s + 1
+  end
+  for k = 1, #occ - 1, 2 do
+    local opener = occ[k] - 1
+    local inner_s = occ[k] + len - 1
+    local closer = occ[k + 1] - 1
+    if c >= inner_s and c <= closer then
+      return { opener = opener, inner_s = inner_s, closer = closer }
+    end
+  end
+  return nil
+end
+
 -- ------------------------------------------------------- normal + insert
+-- Yeni açılan boş vurgu bloğunun bekleyen durumu (buffer başına).
+-- Yalnızca bu blok yazıldıktan sonra <C-x> "escape" için kullanılır; hazır
+-- bloklarda imleç sonda olsa bile escape tetiklenmez, vurgu kaldırılır.
+local pending = {}
+
+local function unbold_span(style, lnum, line, sp, c)
+  local inner = line:sub(sp.inner_s + 1, sp.closer)
+  vim.api.nvim_buf_set_text(0, lnum - 1, sp.opener, lnum - 1, sp.closer + #style.right, { inner })
+  vim.api.nvim_win_set_cursor(0, { lnum, math.max(sp.opener, c - #style.left) })
+end
+
 local function toggle_normal_or_insert(style, insert)
   local lnum = vim.fn.line(".")
   local line = vim.fn.getline(lnum)
   local c = vim.fn.col(".") - 1
+  local bufnr = vim.api.nvim_get_current_buf()
+
+  local sp = find_span(line, c, style)
+  local p = pending[bufnr]
+  local is_pending = p ~= nil
+    and p.style == style
+    and p.lnum == lnum
+    and sp ~= nil
+    and sp.opener == p.opener
+
+  if is_pending then
+    local inner = line:sub(sp.inner_s + 1, sp.closer)
+    if inner:match("^%s*$") then
+      -- Açıldı ama yazılmadı: çifti kaldır (toggle off).
+      vim.api.nvim_buf_set_text(0, lnum - 1, sp.opener, lnum - 1, sp.closer + #style.right, { "" })
+      vim.api.nvim_win_set_cursor(0, { lnum, sp.opener })
+      pending[bufnr] = nil
+      return
+    elseif c == sp.closer then
+      -- Yazı bitti: imleci kapanışın sonrasına taşı (escape).
+      vim.api.nvim_win_set_cursor(0, { lnum, sp.closer + #style.right })
+      pending[bufnr] = nil
+      return
+    end
+    -- İmleç ortada: bekleyeni bırak, normal (unbold) akışa düş.
+    pending[bufnr] = nil
+  end
+
+  if sp then
+    -- Kapsayan bloğun vurgusunu kaldır (tek kelime değil, tüm blok).
+    unbold_span(style, lnum, line, sp, c)
+    return
+  end
+
   local s, e = token_range(line, c)
   if s then
     wrap_token(style, lnum, s, e, insert)
   else
     wrap_empty(style, lnum, c, insert)
+    pending[bufnr] = { style = style, lnum = lnum, opener = c }
   end
 end
 
