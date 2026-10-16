@@ -146,6 +146,67 @@ do
 end
 
 --------------------------------------------------------------------------
+-- renumber: sirali listede araya ekleyince blok butunlugu korunur
+--------------------------------------------------------------------------
+
+do
+  local h, out, cur = run({ "1. a", "2. b", "3. c", "4. d" }, 2, 4, M.new_list_item)
+  check(
+    { h, out, cur },
+    { true, { "1. a", "2. b", "3. ", "4. c", "5. d" }, { 3, 3 } },
+    "renumber: ortaya ekle -> sonrasi +1"
+  )
+end
+
+do
+  local h, out, cur = run({ "1. a", "2. b" }, 2, 4, M.new_list_item)
+  check({ h, out, cur }, { true, { "1. a", "2. b", "3. " }, { 3, 3 } }, "renumber: sona ekle")
+end
+
+do
+  local h, out, cur = run({ "1. a", "2. b", "3. c" }, 1, 4, M.new_list_item)
+  check({ h, out, cur }, { true, { "1. a", "2. ", "3. b", "4. c" }, { 2, 3 } }, "renumber: basa ekle")
+end
+
+do
+  local h, out, cur = run({ "1. a", "2. b", "", "3. c", "4. d" }, 2, 4, M.new_list_item)
+  check(
+    { h, out, cur },
+    { true, { "1. a", "2. b", "3. ", "", "3. c", "4. d" }, { 3, 3 } },
+    "renumber: bos satir blogu boler"
+  )
+end
+
+do
+  local h, out, cur = run({ "1. a", "   1. x", "   2. y", "2. b" }, 1, 4, M.new_list_item)
+  check(
+    { h, out, cur },
+    { true, { "1. a", "2. ", "   1. x", "   2. y", "3. b" }, { 2, 3 } },
+    "renumber: alt liste dokunulmaz"
+  )
+end
+
+do
+  local h, out, cur = run({ "1. a", "1. b", "1. c" }, 1, 4, M.new_list_item)
+  check({ h, out, cur }, { true, { "1. a", "2. ", "3. b", "4. c" }, { 2, 3 } }, "renumber: bozuk sira duzeltilir")
+end
+
+do
+  local h, out, cur = run({ "8. a", "9. b" }, 1, 4, M.new_list_item)
+  check({ h, out, cur }, { true, { "8. a", "9. ", "10. b" }, { 2, 3 } }, "renumber: basamak artisi")
+end
+
+do
+  local h, out, cur = run({ "1) a", "2) b" }, 1, 4, M.new_list_item)
+  check({ h, out, cur }, { true, { "1) a", "2) ", "3) b" }, { 2, 3 } }, "renumber: ')' ayraci ayri sayilir")
+end
+
+do
+  local h, out, cur = run({ "- a", "- b" }, 1, 3, M.new_list_item)
+  check({ h, out, cur }, { true, { "- a", "- ", "- b" }, { 2, 2 } }, "renumber: bullet degismez")
+end
+
+--------------------------------------------------------------------------
 -- soft_break: Shift+Enter -> ayni maddeye metin hizasinda devam
 --------------------------------------------------------------------------
 

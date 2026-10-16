@@ -61,6 +61,30 @@ do
   check(lines[2] == "", "o sonrasi bos madde: Enter isareti kaldirir")
 end
 
+-- silme sonrasi yeniden numaralama (nvim_buf_attach on_lines otomatik tetikler)
+local function del(cmd, init)
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, init)
+  vim.cmd(cmd)
+  vim.wait(30)
+  return vim.api.nvim_buf_get_lines(0, 0, -1, false)
+end
+
+check(
+  vim.deep_equal(del("normal! 3Gdd", { "1. a", "2. b", "3. c", "4. d" }), { "1. a", "2. b", "3. d" }),
+  "silme: orta madde -> sonrasi kapanir"
+)
+check(
+  vim.deep_equal(del("normal! 2Gdd", { "1. a", "2. b", "", "3. c", "4. d" }), { "1. a", "", "3. c", "4. d" }),
+  "silme: bos satir blogu boler"
+)
+check(
+  vim.deep_equal(
+    del("normal! 3Gdd", { "1. a", "2. b", "3. c", "```", "7. x", "7. y", "```" }),
+    { "1. a", "2. b", "```", "7. x", "7. y", "```" }
+  ),
+  "silme: kod blogu korunur"
+)
+
 vim.fn.delete(tmp)
 io.write(string.format("\n%d/%d gecti, %d basarisiz\n", total - failures, total, failures))
 os.exit(failures == 0 and 0 or 1)

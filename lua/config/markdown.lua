@@ -595,6 +595,62 @@ local function find_content_col(bufnr, row, line)
   return nil
 end
 
+-- Tüm buffer'ı tek geçişte tarayıp sıralı liste bloklarını yeniden numaralar.
+-- Blok ilk maddesinin numarası çapadır, sonrası +1 artar. Boş satır veya
+-- madde olmayan satır bloğu bitirir; farklı girinti/ayraç yeni çapa olur
+-- (alt liste kendi içinde numaralanır). Fenced kod blokları atlanır.
+local function renumber_buffer(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local fence = false
+  local counter = {} -- key = indent.."\0"..delim -> sonraki numara (blok başına)
+  for i, line in ipairs(lines) do
+    local t = line:gsub("^%s*", "")
+    if t:match("^```") or t:match("^~~~") then
+      fence = not fence
+      counter = {}
+    elseif fence then
+      -- kod bloğu içi atlanır
+    elseif line:match("^%s*$") then
+      -- boş satır bloğu bitirir
+      counter = {}
+    else
+      local p = parse_list_prefix(line)
+      if p and p.kind == "ordered" then
+        local key = p.indent .. "\0" .. p.delim
+        local n = counter[key] or p.number
+        local new = string.format("%s%d%s%s%s", p.indent, n, p.delim, p.gap, p.text)
+        if new ~= line then
+          pcall(vim.cmd, "undojoin")
+          vim.api.nvim_buf_set_lines(bufnr, i - 1, i, false, { new })
+        end
+        counter[key] = n + 1
+      end
+      -- madde olmayan dolu satır sayacı sıfırlamaz (blok devam eder)
+    end
+  end
+end
+
+-- Renumber'i buffer başına koru (set_lines → TextChanged → yeniden tetikleme).
+local renumbering = {}
+local function do_renumber(bufnr)
+  if renumbering[bufnr] then
+    return
+  end
+  renumbering[bufnr] = true
+  pcall(renumber_buffer, bufnr)
+  renumbering[bufnr] = nil
+end
+
+-- Silme/ekleme sonrası listeyi yeniden numarala (buffer değişiminde çağrılır).
+function M.renumber(bufnr)
+  if not bufnr or bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  if vim.api.nvim_buf_is_valid(bufnr) then
+    do_renumber(bufnr)
+  end
+end
+
 -- Enter: imleç satır sonundaysa bulunulan listenin türüne göre bir sonraki
 -- maddeyi açar. Boş maddede işareti kaldırıp listeyi bitirir.
 -- opts.require_end (varsayılan true): imleç satır sonunda olmalı. Normal-mod
@@ -632,7 +688,12 @@ function M.new_list_item(opts)
     marker = p.indent .. p.bullet .. p.gap
   end
   vim.api.nvim_buf_set_lines(bufnr, row, row, false, { marker })
-  vim.api.nvim_win_set_cursor(0, { row + 1, #marker })
+  local new_row = row + 1
+  if p.kind == "ordered" then
+    do_renumber(bufnr)
+  end
+  local new_line = vim.api.nvim_buf_get_lines(bufnr, new_row - 1, new_row, false)[1] or ""
+  vim.api.nvim_win_set_cursor(0, { new_row, #new_line })
   return true
 end
 

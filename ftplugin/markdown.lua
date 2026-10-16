@@ -89,6 +89,28 @@ map("n", "o", function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("o", true, false, true), "n", false)
 end, "Alt satırda sonraki madde (o)")
 
+-- Silme (ve her tür buffer değişimi) sonrası liste numaralamasını güncelle;
+-- bloğun ardışık sırası her zaman korunur. Insert modda ve komut satırında
+-- dokunulmaz (yazarken araya girip numara değiştirmesin). Normal-mod
+-- değişiklikleri bir sonraki tick'te, blok yerleştikten sonra işlenir.
+local renumber_scheduled = false
+vim.api.nvim_buf_attach(0, false, {
+  on_lines = function(_, bufnr)
+    if renumber_scheduled then
+      return
+    end
+    renumber_scheduled = true
+    vim.schedule(function()
+      local m = vim.fn.mode()
+      local first = m:sub(1, 1)
+      if first ~= "i" and first ~= "c" and m ~= "t" and vim.bo[bufnr].modifiable then
+        M.renumber(bufnr)
+      end
+      renumber_scheduled = false
+    end)
+  end,
+})
+
 -- ----------------------------------------------------------------- alıntı
 map({ "n", "v" }, "<leader>q", M.toggle_quote, "Alıntı")
 
