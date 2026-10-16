@@ -76,6 +76,19 @@ end
 map("i", "<CR>", list_cr, "Sonraki madde / Enter")
 map("i", "<S-CR>", list_shift_cr, "Madde içi satır (Shift+Enter)")
 
+-- Normal-mod `o` (satır sonundan Enter eşdeğeri) da aynı liste devamını
+-- uygular. `O` (üste aç) bilinçli olarak varsayılan kalır.
+map("n", "o", function()
+  if M.new_list_item({ require_end = false }) then
+    -- `!` (append) sart: normal moddan gelindiginde nvim_win_set_cursor
+    -- satir sonunu bir karakter kirpar; `6. |` kalirsa bos Enter isareti
+    -- kaldiramaz. Append imleci boslugun sagina tasir.
+    vim.cmd("startinsert!")
+    return
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("o", true, false, true), "n", false)
+end, "Alt satırda sonraki madde (o)")
+
 -- ----------------------------------------------------------------- alıntı
 map({ "n", "v" }, "<leader>q", M.toggle_quote, "Alıntı")
 

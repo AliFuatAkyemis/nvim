@@ -597,13 +597,17 @@ end
 
 -- Enter: imleç satır sonundaysa bulunulan listenin türüne göre bir sonraki
 -- maddeyi açar. Boş maddede işareti kaldırıp listeyi bitirir.
+-- opts.require_end (varsayılan true): imleç satır sonunda olmalı. Normal-mod
+-- `o` gibi zaten "alta aç" anlamına gelen çağrılar false geçer.
 -- İşlediyse true, aksi halde false döner (çağıran normal Enter'a düşer).
-function M.new_list_item()
+function M.new_list_item(opts)
+  opts = opts or {}
+  local require_end = opts.require_end ~= false
   local bufnr = vim.api.nvim_get_current_buf()
   local cur = vim.api.nvim_win_get_cursor(0)
   local row, col = cur[1], cur[2]
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ""
-  if col < #line then
+  if require_end and col < #line then
     return false
   end
   if in_code_fence(bufnr, row) then

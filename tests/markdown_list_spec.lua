@@ -109,6 +109,42 @@ do
   check({ h, out, cur }, { true, { "```", "x", "```", "- gercek", "- " }, { 5, 2 } }, "kod blogundan sonra: islenir")
 end
 
+-- o (normal): require_end = false -> imlec konumundan bagimsiz satir sonu gibi
+do
+  local h, out, cur = run({ "1. madde" }, 1, 3, function()
+    return M.new_list_item({ require_end = false })
+  end)
+  check({ h, out, cur }, { true, { "1. madde", "2. " }, { 2, 3 } }, "o: satir ortasindan sonraki madde")
+end
+
+do
+  local h, out, cur = run({ "- madde" }, 1, 4, function()
+    return M.new_list_item({ require_end = false })
+  end)
+  check({ h, out, cur }, { true, { "- madde", "- " }, { 2, 2 } }, "o: bullet ortasindan devam")
+end
+
+do
+  local h, out, cur = run({ "2. " }, 1, 1, function()
+    return M.new_list_item({ require_end = false })
+  end)
+  check({ h, out, cur }, { true, { "" }, { 1, 0 } }, "o: bos maddede isaret kaldirilir")
+end
+
+do
+  local h, out, cur = run({ "merhaba" }, 1, 3, function()
+    return M.new_list_item({ require_end = false })
+  end)
+  check({ h, out, cur }, { false, { "merhaba" }, { 1, 3 } }, "o: liste degilse islenmez")
+end
+
+do
+  local h, out, cur = run({ "```", "- kod" }, 2, 0, function()
+    return M.new_list_item({ require_end = false })
+  end)
+  check({ h, out, cur }, { false, { "```", "- kod" }, { 2, 0 } }, "o: kod blogu icinde islenmez")
+end
+
 --------------------------------------------------------------------------
 -- soft_break: Shift+Enter -> ayni maddeye metin hizasinda devam
 --------------------------------------------------------------------------
