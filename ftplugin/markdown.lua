@@ -111,6 +111,17 @@ vim.api.nvim_buf_attach(0, false, {
   end,
 })
 
+-- Insert'tan çıkınca (ör. bir maddenin numarasını değiştirdikten sonra) listeyi
+-- yeniden numarala; güncelleme için ekstra tuşa basmak gerekmez.
+vim.api.nvim_create_autocmd("InsertLeave", {
+  buffer = 0,
+  callback = function()
+    if vim.bo.modifiable then
+      M.renumber()
+    end
+  end,
+})
+
 -- ----------------------------------------------------------------- alıntı
 map({ "n", "v" }, "<leader>q", M.toggle_quote, "Alıntı")
 

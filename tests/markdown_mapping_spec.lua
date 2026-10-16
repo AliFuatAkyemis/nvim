@@ -85,6 +85,15 @@ check(
   "silme: kod blogu korunur"
 )
 
+-- Bir maddenin numarasi duzenlenip insert'tan cikilinca liste guncellenmeli
+-- (on_lines geri cagrisi beklenmeden; InsertLeave senkron tetiklenir).
+do
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, { "1. a", "5. b", "9. c" })
+  vim.api.nvim_exec_autocmds("InsertLeave", { buffer = 0 })
+  local out = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  check(vim.deep_equal(out, { "1. a", "2. b", "3. c" }), "InsertLeave: liste guncellenir")
+end
+
 vim.fn.delete(tmp)
 io.write(string.format("\n%d/%d gecti, %d basarisiz\n", total - failures, total, failures))
 os.exit(failures == 0 and 0 or 1)

@@ -28,5 +28,8 @@ return {
     -- lualine/statusline ile çakışmasın, yazım yüzeyi temiz kalsın
     statusline = { enabled = false },
     footer = { enabled = false },
+    -- Normal-mod <CR> (smart_action) yalnızca zaten checkbox olan maddeleri
+    -- işaretleyip kaldırsın; düz liste/paragrafı checkbox'a ÇEVİRMESİN.
+    checkbox = { enabled = true, create_new = false },
   },
 }
