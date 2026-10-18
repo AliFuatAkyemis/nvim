@@ -131,6 +131,22 @@ local function ctrl_right()
 end
 vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Sonraki kelime (satır sonunda kelime sonuna git)" })
 
+-- <C-h> / <C-l>: pratik klavye için <C-Left> / <C-Right> alias'ları.
+-- Ok tuşları (<C-Left>/<C-Right>) motor düzeyinde varsayılan kalır; burada
+-- yalnızca alias eklenir, hiçbir hareket kaybı olmaz.
+-- Normal <C-h> = <BS> olduğundan normal modda <BS> de kelime-sola olur
+-- (sola karakter için `h` kullanılır).
+vim.keymap.set("n", "<C-h>", "b", { desc = "Önceki kelime (<C-Left>)" })
+vim.keymap.set({ "n", "i" }, "<C-l>", ctrl_right, { desc = "Sonraki kelime (<C-Right>)" })
+
+-- Insert/cmdline <C-h> (<C-W> = önceki kelimeyi sil, Ctrl+Backspace) yukarıda
+-- bilinçli olarak korunur; buraya taşınmadı.
+-- <C-l> artık kelime atlama olduğu için varsayılan işi (arama vurgusunu
+-- temizle + redraw) buraya alındı.
+vim.keymap.set("n", "<leader>r", function()
+  vim.cmd("nohlsearch | diffupdate | normal! <C-L>")
+end, { desc = "Aramayı temizle + redraw" })
+
 -- Fix Ctrl+Backspace to delete word by word
 vim.keymap.set("i", "<C-H>", "<C-W>", { noremap = true, silent = true })
 vim.keymap.set("c", "<C-H>", "<C-W>", { noremap = true, silent = true })

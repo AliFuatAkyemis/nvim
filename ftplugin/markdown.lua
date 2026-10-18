@@ -22,8 +22,10 @@ map("i", "<C-e>", function() M.toggle("code", "i") end, "Inline code")
 map({ "n", "v" }, "<C-s>", function() M.toggle("strike") end, "Üstü çizili")
 map("i", "<C-s>", function() M.toggle("strike", "i") end, "Üstü çizili")
 
-map({ "n", "v" }, "<C-l>", function() M.toggle("highlight") end, "Vurgu")
-map("i", "<C-l>", function() M.toggle("highlight", "i") end, "Vurgu")
+-- Vurgu <leader>lh: <C-l> global kelime-atlama alias'ına bırakıldı (bkz.
+-- lua/config/keymaps.lua), bu yüzden buffer-local olarak tanımlanmaz.
+map({ "n", "v" }, "<leader>lh", function() M.toggle("highlight") end, "Vurgu")
+map("i", "<leader>lh", function() M.toggle("highlight", "i") end, "Vurgu")
 
 -- ----------------------------------------------------------------- link
 map({ "n", "v", "i" }, "<C-k>", function() M.insert_link() end, "Link ekle")
