@@ -1,85 +1,308 @@
-# My Neovim Configuration 🚀
+# Neovim Config
 
-A modular, high-performance, and aesthetically pleasing Neovim configuration tailored for **Java (Spring Boot)** and Lua development.
+A personal, batteries-included Neovim setup in pure Lua. Built around two
+daily drivers — **Java / Spring Boot** and the web stack (**TypeScript,
+Angular, HTML/CSS**) — plus an **Obsidian-style Markdown** workflow.
 
-## ✨ Features
-
-- **Modular Design**: Config is split into `options`, `keymaps`, and `plugins`.
-- **Advanced Java Support**: 
-  - Full LSP support via `nvim-jdtls`.
-  - **Lombok** integration (automatic detection in `lib/` or global).
-  - Debugger and Test integration via `nvim-dap`.
-- **Modern UI**:
-  - **Catppuccin** Mocha theme.
-  - **Lualine** for a clean status line.
-  - **Neo-tree** for file navigation.
-  - **Telescope** for fuzzy finding.
-- **Robust Indentation**: Fixed 4-space indentation as preferred for maximum readability in large projects.
+Managed by [lazy.nvim](https://github.com/folke/lazy.nvim), themed with
+**Catppuccin Mocha**, tested with headless specs.
 
 ---
 
-## 📂 File Structure
+## Table of Contents
+
+- [Highlights](#highlights)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Architecture](#architecture)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Notes & Caveats](#notes--caveats)
+
+---
+
+## Highlights
+
+- **Java (Spring Boot)** — `nvim-jdtls` with Lombok agent, `java-debug-adapter`
+  and `java-test` bundles wired straight into jdtls, JUnit run/test keymaps.
+- **Markdown / Obsidian** — a hand-written editing core: emphasis toggles,
+  links, wikilinks, headings, checkboxes, quotes, and list continuation with
+  automatic ordered-list renumbering. Rendered in-buffer by `render-markdown.nvim`.
+- **Web frontend indentation** — a custom `indentexpr` (VSCode `onEnterRules`
+  logic) replaces Treesitter indent for HTML/Angular/JS/TS/JSX so `<div>`,
+  `{`, `(` and `[` break exactly the way you expect.
+- **LSP everywhere** — installs and configures 20+ servers via Mason:
+  jdtls, vtsls, pyright, gopls, rust-analyzer, clangd, angular, kotlin,
+  html/css/json/eslint/tailwind/yaml/bash/dockerfile, marksman and more.
+- **Inline AI** — `opencode.nvim` in a right-side pane, context-aware
+  (current file, selection, diagnostics).
+- **UI polish** — Catppuccin Mocha, Lualine, Bufferline (pinned buffers),
+  Neo-tree, Telescope, Noice, indent-blankline.
+- **Headless test suite** — plain `nvim --headless` specs, no framework needed.
+
+---
+
+## Requirements
+
+| Requirement | Notes |
+| :-- | :-- |
+| **Neovim ≥ 0.11** | Uses `vim.lsp.config`, `vim.treesitter.start`, and the `main` branch of nvim-treesitter. |
+| **git**, **ripgrep** | Plugin bootstrap and Telescope live-grep. |
+| **JDK 17/21** | jdtls runtime is hardcoded to `/usr/lib/jvm/java-21-openjdk` (see [Notes](#notes--caveats)). |
+| **Maven or Gradle** | For Java project roots (`pom.xml`, `mvnw`, `gradlew`, `.git`). |
+| **Nerd Font** | `JetBrainsMono Nerd Font` is the GUI font. |
+| **C compiler + `tree-sitter` CLI** | Building Treesitter parsers. |
+| **Alacritty** *(optional)* | Used by the Neovide `<C-S-n>` keymap. |
+| **`latex2text`** *(optional)* | LaTeX conversion in `render-markdown.nvim`. |
+
+---
+
+## Installation
+
+> Back up anything already in `~/.config/nvim` first.
+
+```bash
+git clone git@github.com:AliFuatAkyemis/Neovim-Config.git ~/.config/nvim
+nvim
+```
+
+On first launch `lazy.nvim` bootstraps itself, then installs every plugin:
+
+1. Wait for Lazy to finish — `:Lazy` to inspect.
+2. `:Mason` — verify `jdtls`, `java-debug-adapter`, `java-test` and the other
+   servers are installed.
+3. `:TSUpdate` — builds the Treesitter parsers listed in
+   `lua/plugins/treesitter.lua`.
+
+`lazy-lock.json` is **gitignored** on purpose, so plugins track their latest
+compatible revisions after a fresh clone.
+
+---
+
+## Usage
+
+Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
+
+### Global
+
+| Key | Action |
+| :-- | :-- |
+| `<C-p>` | Find files (Telescope) |
+| `<leader>fg` | Live grep |
+| `<C-n>` | Toggle Neo-tree |
+| `<leader>w` | Save file |
+| `<leader>f` | Format buffer (conform) |
+| `<leader>?` | Buffer-local keymaps (which-key) |
+| `<C-k>` | Floating diagnostic |
+| `<leader>r` | Clear search highlight + redraw |
+| `<leader>up` | Toggle LSP progress |
+
+### Buffers & Windows
+
+| Key | Action |
+| :-- | :-- |
+| `L` / `H` | Next / previous buffer |
+| `<leader>x` | Close buffer, keep the split layout |
+| `<leader>bp` | Pin / unpin buffer (Bufferline) |
+
+### Motion & Editing
+
+| Key | Action |
+| :-- | :-- |
+| `<C-l>`, `<C-Right>` | Next word — stops at the word end before wrapping to the next line |
+| `<C-h>` | Previous word (normal mode) |
+| `<C-H>`, `<C-BS>` | Delete previous word (insert / cmdline) |
+| `<C-Del>` | Delete next word |
+| `Tab` / `S-Tab` (insert) | Completion / snippet navigation |
+
+### Clipboard
+
+| Key | Action |
+| :-- | :-- |
+| `y` / `p` | Neovim registers only — does **not** touch the system clipboard |
+| `<leader>y` | Yank line/selection to the system clipboard |
+| `<leader>p` / `<leader>P` | Paste from clipboard (after / before) |
+| `<C-S-c>` | Copy selection to clipboard (visual) |
+| `<C-S-v>` | Paste from clipboard (normal / visual / insert / cmd) |
+
+### Markdown & Obsidian
+
+Active in `markdown` buffers only.
+
+| Key | Action |
+| :-- | :-- |
+| `<C-b>` | **Bold** (normal / visual / insert) |
+| `<C-i>`, `Tab` | *Italic* |
+| `<C-e>` | `Inline code` |
+| `<C-s>` | ~~Strikethrough~~ |
+| `<leader>lh` | ==Highlight== |
+| `<C-k>` | Insert link `[text](url)` |
+| `<leader>l` | Insert wikilink `[[Note]]` |
+| `<C-1>` … `<C-6>` | Heading level 1–6 (press again to clear) |
+| `<C-Enter>` | Toggle checkbox `- [ ] ↔ - [x]` |
+| `<Enter>` | Continue list / next ordered number |
+| `<Shift-Enter>` | Soft break, aligned to the item's content column |
+| `o` | New item below |
+| `<leader>q` | Toggle block quote |
+| `Tab` / `S-Tab` (visual) | Indent / outdent |
+
+Behavioral details:
+
+- Emphasis toggles the **whole span** the cursor sits in, and handles
+  `***bold italic***` style combinations without corrupting them.
+- Ordering is renumbered on edits and on insert-leave, skipping fenced code
+  blocks.
+- Normal-mode `<Enter>` only toggles *existing* checkboxes; it never converts a
+  plain list item into one.
+
+### Java (jdtls)
+
+Buffer-local, loaded from `ftplugin/java.lua`.
+
+| Key | Action |
+| :-- | :-- |
+| `<leader>jo` | Organize imports |
+| `<leader>jc` | Extract constant |
+| `<leader>jv` | Extract variable |
+| `<leader>jt` | Run test class |
+| `<leader>jT` | Run nearest test method |
+| `K` | Hover documentation |
+| `gd` | Go to definition |
+
+### AI (opencode.nvim)
+
+| Key | Action |
+| :-- | :-- |
+| `<leader>o…` | opencode actions (prefix `<leader>o`) |
+| `<leader>out` | Toggle tool output |
+| `<leader>our` | Toggle reasoning output |
+| `<leader>oum` | Toggle max messages |
+
+### Neovide
+
+| Key | Action |
+| :-- | :-- |
+| `<F11>` | Toggle fullscreen |
+| `<C-S-n>` | Open Alacritty in the current directory |
+
+---
+
+## Architecture
 
 ```text
 ~/.config/nvim/
-├── init.lua              # Entry point
+├── init.lua                  # Entry: leader → options → lazy → keymaps
 ├── ftplugin/
-│   └── java.lua          # Java-specific LSP & DAP settings
-└── lua/
-    ├── config/
-    │   ├── keymaps.lua   # Global keybindings
-    │   ├── lazy.lua      # Plugin manager (Lazy.nvim)
-    │   └── options.lua   # Vim options & aesthetics
-    └── plugins/
-        ├── java.lua      # Java plugin dependencies
-        ├── mason.lua     # LSP/DAP/Linter installer
-        └── ...           # Other UI & tool plugins
+│   ├── java.lua              # jdtls + Lombok + debug/test bundles
+│   └── markdown.lua          # Markdown keymaps (buffer-local, thin wiring)
+├── lib/
+│   └── lombok.jar            # Fallback Lombok agent
+├── queries/
+│   └── typescript/injections.scm   # Treesitter injection override
+├── lua/
+│   ├── config/               # Non-plugin core
+│   │   ├── options.lua       # vim.opt, autocmds, htmlangular detection
+│   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
+│   │   ├── keymaps.lua       # Global keymaps + layout manager
+│   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
+│   │   └── markdown.lua      # Obsidian-style markdown engine (pure logic)
+│   └── plugins/              # One file per plugin group (lazy specs)
+└── tests/                    # Headless specs
 ```
 
----
+**Load order** — `init.lua` sets `mapleader` first, then `config.options`, then
+`config.lazy` (which bootstraps lazy.nvim and imports every module in
+`lua/plugins/`), then `config.keymaps` last so plugin commands like Telescope
+exist when the mappings are created.
 
-## ⌨️ Keymaps (Java Specific)
+**Filetype layer** — `ftplugin/` and the `FileType` autocmds in
+`config/options.lua` and `lua/plugins/treesitter.lua` attach LSP, indent and
+keymaps only where they belong, keeping global state untouched.
 
-| Keymap | Action |
-| :--- | :--- |
-| `<leader>jo` | Organize Imports |
-| `<leader>jc` | Extract Constant |
-| `<leader>jv` | Extract Variable |
-| `<leader>jt` | Test Class |
-| `<leader>jT` | Test Nearest Method |
-| `K` | Show Documentation (Hover) |
-| `gd` | Go to Definition |
+**Markdown split** — `lua/config/markdown.lua` holds the logic (cursor
+geometry, span detection, list parsing and renumbering) and defines no
+keymaps; `ftplugin/markdown.lua` only binds keys to it. This is what makes the
+engine testable headlessly.
 
----
+**Web indentation** — for `html`, `htmlangular`, `javascript`, `typescript`
+and JSX/TSX, Treesitter indent is deliberately disabled and `indent.lua`'s rule
+table (`mode` / `before` / `before_not` / `current` / `action`) drives
+`indentexpr` instead.
 
-## 🛠️ Requirements
-
-- **Neovim** >= 0.10.0
-- **JDK 17 or 21** (Installed at `/usr/lib/jvm/java-21-openjdk`)
-- **Maven/Gradle** for project management.
-- **Lombok**: Project-specific `lib/lombok.jar` will be used if present, otherwise falls back to Mason global version.
-
----
-
-## 🚀 Installation
-
-1. Clone this repository to `~/.config/nvim`:
-   ```bash
-   git clone <your-repo-ui> ~/.config/nvim
-   ```
-2. Open Neovim:
-   ```bash
-   nvim
-   ```
-3. Lazy.nvim will automatically bootstrap and install all plugins.
-4. Run `:Mason` to verify `jdtls`, `java-debug-adapter`, and `java-test` are installed.
+**Layout manager** — an autocmd group in `config/keymaps.lua` pins Neo-tree to
+the far left (~25%) and the opencode pane to the far right, re-applying widths
+whenever windows open, close or the editor resizes.
 
 ---
 
-## 🎨 Aesthetics
+## Testing
 
-This configuration uses **Catppuccin Mocha** by default with customized cursor lines and list characters for a premium feel. 
-Indentation is strictly set to **4 spaces**.
+The specs run against a **clean** Neovim (`-u NONE`) and load only the code
+under test:
+
+```bash
+nvim --headless -u NONE -l tests/keymap_word_nav_spec.lua
+nvim --headless -u NONE -l tests/markdown_list_spec.lua
+nvim --headless -u NONE -l tests/markdown_mapping_spec.lua
+nvim --headless -u NONE -l tests/obsidian_checkbox_spec.lua
+```
+
+Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
+into CI as-is.
+
+| Spec | Covers |
+| :-- | :-- |
+| `keymap_word_nav_spec` | `<C-h>` / `<C-l>` word motion aliases |
+| `markdown_list_spec` | List parsing, continuation, renumbering |
+| `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
+| `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
 
 ---
-*Maintained with ❤️ by Ali Fuat.*
+
+## Customization
+
+**Leader**
+
+```lua
+-- init.lua
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+```
+
+**Add a plugin** — drop a new spec file into `lua/plugins/`; it is picked up
+automatically by the `{ import = "plugins" }` glob.
+
+```lua
+-- lua/plugins/my-plugin.lua
+return {
+  "author/my-plugin.nvim",
+  event = "VeryLazy",
+  opts = {},
+}
+```
+
+**Formatters** — extend `formatters_by_ft` in `lua/plugins/conform.lua`.
+Markdown is intentionally excluded so Prettier cannot re-wrap prose.
+
+**Lombok** — resolved in this order: `./lib/lombok.jar` in the current project
+→ `~/.config/nvim/lib/lombok.jar` → the jar bundled with jdtls.
+
+**Obsidian vaults** — the `workspaces` table in `lua/plugins/obsidian.lua`
+points at personal paths; replace them with your own.
+
+---
+
+## Notes & Caveats
+
+- **JDK path is hardcoded** in `ftplugin/java.lua`
+  (`/usr/lib/jvm/java-21-openjdk`). Change it for your machine.
+- **`render-markdown.nvim` loads from a local fork** at
+  `~/dev/render-markdown.nvim` because it carries a downstream patch. Without
+  that checkout the plugin will not load — point the `dir` at your own copy or
+  swap it for the upstream repo.
+- **`lazy-lock.json` is gitignored**, so plugin versions are not pinned across
+  machines.
+- **`lib/lombok.jar` is committed** to give jdtls a Lombok agent even when a
+  project ships none.
+- Some comments in the Lua sources are in Turkish.
