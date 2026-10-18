@@ -84,6 +84,53 @@ vim.keymap.set("n", "<leader>up", function()
   end
 end, { desc = "Toggle LSP progress" })
 
+-- Ctrl+Right: satırın son kelimesindeyken ilk basış kelimenin sonuna,
+-- sonraki basış bir alt satıra geçsin.
+local function ctrl_right()
+  local win = vim.api.nvim_get_current_win()
+  local cur = vim.api.nvim_win_get_cursor(win)
+  local row, col = cur[1], cur[2]
+  local line = vim.api.nvim_get_current_line()
+  local insert_mode = vim.api.nvim_get_mode().mode:sub(1, 1) == "i"
+  local on_word = line:sub(col + 1, col + 1):match("%S") ~= nil
+
+  local function motion_target(keys)
+    local view = vim.fn.winsaveview()
+    vim.cmd("normal! " .. keys)
+    local pos = vim.api.nvim_win_get_cursor(win)
+    vim.fn.winrestview(view)
+    return pos
+  end
+
+  local wpos = motion_target("w")
+
+  -- w alt satıra atlayacaksa ve imleç son kelimenin içindeyse önce kelimenin
+  -- sonuna git. Ertesi basışta w normal şekilde alt satıra devam eder.
+  if on_word and wpos[1] > row then
+    local epos = motion_target("e")
+    local end_col = nil
+
+    if epos[1] == row and epos[2] > col then
+      end_col = epos[2]
+    elseif insert_mode then
+      -- Insert modunda imleç son karakterin üzerindeyse kelime sonu bu
+      -- karakterin hemen ardıdır.
+      end_col = col
+    end
+
+    if end_col then
+      -- Insert modunda kelimenin son karakterinin ardına geç. byteidx/charidx
+      -- çok baytlı (UTF-8) karakterlerde doğru bayt konumunu verir.
+      local target_col = insert_mode and vim.fn.byteidx(line, vim.fn.charidx(line, end_col) + 1) or end_col
+      vim.api.nvim_win_set_cursor(win, { row, target_col })
+      return
+    end
+  end
+
+  vim.api.nvim_win_set_cursor(win, wpos)
+end
+vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Sonraki kelime (satır sonunda kelime sonuna git)" })
+
 -- Fix Ctrl+Backspace to delete word by word
 vim.keymap.set("i", "<C-H>", "<C-W>", { noremap = true, silent = true })
 vim.keymap.set("c", "<C-H>", "<C-W>", { noremap = true, silent = true })
