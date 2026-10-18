@@ -132,23 +132,26 @@ end
 vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Sonraki kelime (satır sonunda kelime sonuna git)" })
 
 -- <C-h> / <C-l>: pratik klavye için <C-Left> / <C-Right> alias'ları.
--- Ok tuşları (<C-Left>/<C-Right>) motor düzeyinde varsayılan kalır; burada
--- yalnızca alias eklenir, hiçbir hareket kaybı olmaz.
--- Normal <C-h> = <BS> olduğundan normal modda <BS> de kelime-sola olur
--- (sola karakter için `h` kullanılır).
-vim.keymap.set("n", "<C-h>", "b", { desc = "Önceki kelime (<C-Left>)" })
-vim.keymap.set({ "n", "i" }, "<C-l>", ctrl_right, { desc = "Sonraki kelime (<C-Right>)" })
+-- Ok tuşları (<C-Left>/<C-Right>) değişmez; yalnızca alias eklenir.
+--
+-- <C-h> normal, insert ve görsel modlarda (visual/visual-line/visual-block)
+-- yerleşik <C-Left>'e devredilir. Böylece davranış ok tuşuyla birebir aynı
+-- kalır; insert modda artık metin silmez (bkz. Ctrl+Backspace notu aşağıda).
+vim.keymap.set({ "n", "i", "x" }, "<C-h>", "<C-Left>", { desc = "Önceki kelime (<C-Left>)" })
 
--- Insert/cmdline <C-h> (<C-W> = önceki kelimeyi sil, Ctrl+Backspace) yukarıda
--- bilinçli olarak korunur; buraya taşınmadı.
+-- <C-l>: normal/insert modda mevcut özel fonksiyon (satır sonunda kelime
+-- sonuna durur). Görsel modlarda seçimi bozmamak için yerleşik <C-Right>.
+vim.keymap.set({ "n", "i" }, "<C-l>", ctrl_right, { desc = "Sonraki kelime (<C-Right>)" })
+vim.keymap.set("x", "<C-l>", "<C-Right>", { desc = "Sonraki kelime (<C-Right>)" })
 -- <C-l> artık kelime atlama olduğu için varsayılan işi (arama vurgusunu
 -- temizle + redraw) buraya alındı.
 vim.keymap.set("n", "<leader>r", function()
   vim.cmd("nohlsearch | diffupdate | normal! <C-L>")
 end, { desc = "Aramayı temizle + redraw" })
 
--- Fix Ctrl+Backspace to delete word by word
-vim.keymap.set("i", "<C-H>", "<C-W>", { noremap = true, silent = true })
+-- Ctrl+Backspace (kelime sil). Insert modda <C-H> artık "önceki kelime"
+-- hareketi olduğu için burada tanımlanmaz; kelime silme, Kitty Keyboard
+-- Protocol gönderen <C-BS> ile ve cmdline <C-H> ile devam eder.
 vim.keymap.set("c", "<C-H>", "<C-W>", { noremap = true, silent = true })
 -- Some terminals send <C-BS> instead of <C-H>
 vim.keymap.set("i", "<C-BS>", "<C-W>", { noremap = true, silent = true })

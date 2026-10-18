@@ -55,33 +55,73 @@ end
 
 -- --------------------------------------------------------------- kelime atlama
 check(effective("n", "<C-h>").desc == "Önceki kelime (<C-Left>)", "normal <C-h> bizim mapping")
+check(effective("i", "<C-h>").desc == "Önceki kelime (<C-Left>)", "insert <C-h> bizim mapping")
 check(effective("n", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "normal <C-l> bizim mapping")
 check(effective("i", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "insert <C-l> bizim mapping")
+check(effective("x", "<C-h>").desc == "Önceki kelime (<C-Left>)", "visual <C-h> bizim mapping")
+check(effective("x", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "visual <C-l> bizim mapping")
 
 -- Ok tuslari korunur (regresyon): <C-Right> hala tanimli olmali.
 check(effective("n", "<C-Right>").desc ~= "", "normal <C-Right> korunur")
 check(effective("i", "<C-Right>").desc ~= "", "insert <C-Right> korunur")
 
--- Insert <C-h> = Ctrl+Backspace kelime silme KAYBOLMAMALI.
-check(effective("i", "<C-H>").rhs == "<C-W>", "insert <C-h> hala <C-W> (kelime sil)")
+-- Insert <C-h> artik silmez; kelime silme <C-BS> ve cmdline <C-H>'ta kalir.
+check(effective("i", "<C-BS>").rhs == "<C-W>", "insert <C-BS> hala <C-W> (Ctrl+Backspace)")
+check(effective("c", "<C-BS>").rhs == "<C-W>", "cmdline <C-BS> hala <C-W>")
 check(effective("c", "<C-H>").rhs == "<C-W>", "cmdline <C-h> hala <C-W>")
 
 -- <C-l> varsayilani kurtarildi mi?
 check(vim.fn.maparg("<leader>r", "n") ~= "", "<leader>r redraw mapping var")
 
--- ------------------------------------------------------------- davranis testi
--- normal <C-h> onceki kelimenin basina, <C-l> sonraki kelimeye goturmeli.
+-- --------------------------------------------------- ok tusuyla denklik testi
+-- Asil gereksinim: <C-h>/<C-l>, <C-Left>/<C-Right> ile ayni yere gitmeli.
+local LINES = { "bir iki uc", "dort bes alti" }
+
+-- keys: feed edilecek dizi; start: {row, col} (1-indexed)
+local function pos_after(keys, start)
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, LINES)
+  vim.api.nvim_win_set_cursor(0, start)
+  press(keys)
+  vim.wait(30)
+  local p = vim.api.nvim_win_get_cursor(0)
+  local anchor = vim.fn.getpos("v")[3]
+  local line = vim.api.nvim_buf_get_lines(0, 0, -1, false)[1]
+  press("<Esc>")
+  vim.wait(10)
+  return { p[1], p[2], anchor, line }
+end
+
+local function same(keys_a, keys_b, start, label)
+  local a = pos_after(keys_a, start)
+  local b = pos_after(keys_b, start)
+  check(vim.deep_equal(a, b), label .. " (imlec+anchor+metin ayni)")
+end
+
+-- normal
+same("<C-h>", "<C-Left>", { 1, 6 }, "normal: <C-h> == <C-Left>")
+same("<C-l>", "<C-Right>", { 1, 0 }, "normal: <C-l> == <C-Right>")
+
+-- insert (X yazarak insert moda gec)
+same("iX<C-h>", "iX<C-Left>", { 1, 6 }, "insert: <C-h> == <C-Left>")
+same("iX<C-l>", "iX<C-Right>", { 1, 0 }, "insert: <C-l> == <C-Right>")
+
+-- visual / visual-line / visual-block
+same("v<C-h>", "v<C-Left>", { 1, 6 }, "visual: <C-h> == <C-Left>")
+same("v<C-l>", "v<C-Right>", { 1, 0 }, "visual: <C-l> == <C-Right>")
+same("V<C-h>", "V<C-Left>", { 2, 5 }, "V-line: <C-h> == <C-Left>")
+same("V<C-l>", "V<C-Right>", { 1, 0 }, "V-line: <C-l> == <C-Right>")
+same("\22<C-h>", "\22<C-Left>", { 2, 5 }, "block: <C-h> == <C-Left>")
+same("\22<C-l>", "\22<C-Right>", { 1, 0 }, "block: <C-l> == <C-Right>")
+
+-- Insert <C-h> metni degistirmemeli (eski davranis: kelime siliyordu).
 do
   vim.api.nvim_buf_set_lines(0, 0, -1, false, { "bir iki uc" })
-  vim.api.nvim_win_set_cursor(0, { 1, #"bir iki uc" - 1 }) -- son kelime icinde
-  press("<C-h>")
-  vim.wait(20)
-  check(vim.api.nvim_win_get_cursor(0)[2] == #"bir iki ", "<C-h>: onceki kelime basi")
-
-  vim.api.nvim_win_set_cursor(0, { 1, 0 })
-  press("<C-l>")
-  vim.wait(20)
-  check(vim.api.nvim_win_get_cursor(0)[2] > 0, "<C-l>: sonraki kelimeye gider")
+  vim.api.nvim_win_set_cursor(0, { 1, 3 })
+  press("iX<C-h>")
+  vim.wait(30)
+  check(vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] == "birX iki uc", "insert <C-h> metni silmez")
+  press("<Esc>")
+  vim.wait(10)
 end
 
 -- ----------------------------------------------------------------- markdown

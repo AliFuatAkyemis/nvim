@@ -110,11 +110,16 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 
 | Key | Action |
 | :-- | :-- |
-| `<C-l>`, `<C-Right>` | Next word — stops at the word end before wrapping to the next line |
-| `<C-h>` | Previous word (normal mode) |
-| `<C-H>`, `<C-BS>` | Delete previous word (insert / cmdline) |
+| `<C-l>`, `<C-Right>` | Next word — normal/insert stop at the word end before wrapping; visual uses native `<C-Right>` |
+| `<C-h>`, `<C-Left>` | Previous word — normal, insert and all visual modes (visual, visual-line, visual-block) |
+| `<C-BS>` | Delete previous word (insert) |
+| `<C-H>`, `<C-BS>` | Delete previous word (cmdline) |
 | `<C-Del>` | Delete next word |
 | `Tab` / `S-Tab` (insert) | Completion / snippet navigation |
+
+`<C-h>` / `<C-l>` mirror <kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd>. Insert-mode
+`<C-h>` no longer deletes; word deletion there is `<C-BS>` (requires a terminal
+with Kitty Keyboard Protocol support — Alacritty 0.13+).
 
 ### Clipboard
 
@@ -253,7 +258,7 @@ into CI as-is.
 
 | Spec | Covers |
 | :-- | :-- |
-| `keymap_word_nav_spec` | `<C-h>` / `<C-l>` word motion aliases |
+| `keymap_word_nav_spec` | `<C-h>` / `<C-l>` aliases — normal, insert and all visual modes match `<C-Left>` / `<C-Right>` |
 | `markdown_list_spec` | List parsing, continuation, renumbering |
 | `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
