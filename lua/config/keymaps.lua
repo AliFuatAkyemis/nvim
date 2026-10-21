@@ -157,6 +157,11 @@ vim.keymap.set("c", "<C-H>", "<C-W>", { noremap = true, silent = true })
 vim.keymap.set("i", "<C-BS>", "<C-W>", { noremap = true, silent = true })
 vim.keymap.set("c", "<C-BS>", "<C-W>", { noremap = true, silent = true })
 
+-- Insert modda <C-a> varsayılan olarak "önceki yazılan metni ekle" demek; satır
+-- başına gitmez (Neo-tree popup'ları, rename/move girdileri insert modda açılır).
+-- Terminal/readline alışkanlığıyla satır başına dönmek için <Home>'a bağlandı.
+vim.keymap.set("i", "<C-a>", "<Home>", { desc = "Satır başı (insert)" })
+
 -- Fix Ctrl+Delete to delete next word
 vim.keymap.set("i", "<C-Del>", "<C-o>dw", { noremap = true, silent = true })
 vim.keymap.set("c", "<C-Del>", "<C-Right><C-W>", { noremap = true, silent = true })

@@ -70,6 +70,20 @@ check(effective("i", "<C-BS>").rhs == "<C-W>", "insert <C-BS> hala <C-W> (Ctrl+B
 check(effective("c", "<C-BS>").rhs == "<C-W>", "cmdline <C-BS> hala <C-W>")
 check(effective("c", "<C-H>").rhs == "<C-W>", "cmdline <C-h> hala <C-W>")
 
+-- Insert <C-a> satir basina gider (Neo-tree create/rename/move girdileri insert
+-- modda acilir; yerlesik i_CTRL-A metin ekler, imleci tasimaz).
+check(effective("i", "<C-a>").rhs == "<Home>", "insert <C-a> hala <Home>")
+do
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, { "  hello" })
+  vim.api.nvim_win_set_cursor(0, { 1, 7 })
+  press("i<C-a>")
+  vim.wait(30)
+  check(vim.api.nvim_win_get_cursor(0)[2] == 0, "insert <C-a> imleci satir basina tasir")
+  check(vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] == "  hello", "insert <C-a> metin eklemez")
+  press("<Esc>")
+  vim.wait(10)
+end
+
 -- <C-l> varsayilani kurtarildi mi?
 check(vim.fn.maparg("<leader>r", "n") ~= "", "<leader>r redraw mapping var")
 

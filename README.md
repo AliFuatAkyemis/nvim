@@ -116,6 +116,7 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | :-- | :-- |
 | `<C-l>`, `<C-Right>` | Next word — normal/insert stop at the word end before wrapping; visual uses native `<C-Right>` |
 | `<C-h>`, `<C-Left>` | Previous word — normal, insert and all visual modes (visual, visual-line, visual-block) |
+| `<C-a>` | Start of line in insert mode (also Neo-tree create/rename/move inputs) |
 | `<C-BS>` | Delete previous word (insert) |
 | `<C-H>`, `<C-BS>` | Delete previous word (cmdline) |
 | `<C-Del>` | Delete next word |
