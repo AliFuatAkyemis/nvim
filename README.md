@@ -96,7 +96,7 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | `<leader>fg` | Live grep |
 | `<C-n>` | Toggle Neo-tree |
 | `<leader>j` | Neo-tree window: expand/collapse focused node |
-| `<C-j>` | Toggle terminal: opens below the text window (or the current window when no text window is open) in the startup directory; closing returns focus to the text |
+| `<C-j>` | Toggle terminal: opens below the text window (or the current window when no text window is open) in the startup directory; closing returns focus to the text. `<Esc>` leaves Terminal mode for normal-mode scrolling (`hjkl`, `gg/G`, `Ctrl-u/d`, visual selection); `i/I/a/A` return to Terminal mode. In normal mode `<Esc>` is forwarded to the running program (`vim`, `less`, `fzf`) |
 | `<leader>w` | Save file |
 | `<leader>f` | Format buffer (conform) |
 | `<leader>?` | Buffer-local keymaps (which-key) |
@@ -239,7 +239,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── options.lua       # vim.opt, autocmds, htmlangular detection
 │   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
-│   │   ├── terminal.lua      # <C-j> single terminal toggle below the text window
+│   │   ├── terminal.lua      # <C-j> terminal toggle + terminal-normal <Esc> mode
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
 │   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
@@ -304,6 +304,7 @@ nvim --headless -u NONE -l tests/obsidian_checkbox_spec.lua
 nvim --headless -u NONE -l tests/templates_spec.lua
 nvim --headless -u NONE -l tests/comments_spec.lua
 nvim --headless -u NONE -l tests/terminal_toggle_spec.lua
+nvim --headless -u NONE -l tests/terminal_normal_mode_spec.lua
 nvim --headless -u NONE -l tests/neotree_mapping_spec.lua
 nvim --headless -u NONE -l tests/lsp_import_spec.lua
 nvim --headless -u NONE -l tests/prompt_keys_spec.lua
@@ -321,6 +322,7 @@ into CI as-is.
 | `templates_spec` | `BufNewFile` + `seed_file` templates (Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP), package/namespace detection, existing files untouched |
 | `comments_spec` | `gc` normal/line/block toggles, formatter-style blocks, `//` round-trip |
 | `lsp_import_spec` | `<M-CR>` diagnostic targeting, import filter, smart candidate pick, `<C-M-CR>` mappings |
+| `terminal_normal_mode_spec` | Terminal `<Esc>` leaves Terminal mode, normal-mode `<Esc>` reaches the running program, maps stay inside the terminal buffer |
 | `prompt_keys_spec` | Telescope prompt readline-style keys and first-press `<Esc>` close |
 
 ---
