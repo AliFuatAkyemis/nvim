@@ -13,6 +13,14 @@ return {
     -----@type neotree.Config?
     opts = {
       open_files_do_not_replace_types = { "terminal", "trouble", "qf", "opencode", "opencode_output" },
+      event_handlers = {
+        {
+          event = "file_added",
+          handler = function(path)
+            require("config.templates").seed_file(path)
+          end,
+        },
+      },
       window = {
         position = "left",
         width = function()

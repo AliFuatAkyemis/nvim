@@ -228,6 +228,36 @@ local extension_map = {
   php = "php",
 }
 
+local function build_template(path)
+  local extension = path:match("%.([%w]+)$")
+  local kind = extension and extension_map[extension:lower()]
+  local build = kind and templates[kind]
+  if not build then
+    return nil
+  end
+  return build(path)
+end
+
+-- Neo-tree gibi buffer acmadan dosya yaratan kaynaklar icin.
+-- Sadece sifir byte'lik yeni dosyaya yazar.
+function M.seed_file(path)
+  if not path or path == "" then
+    return
+  end
+  if vim.fn.isdirectory(path) == 1 then
+    return
+  end
+  local stat = (vim.uv or vim.loop).fs_stat(path)
+  if not stat or stat.size ~= 0 then
+    return
+  end
+  local lines = build_template(path)
+  if not lines then
+    return
+  end
+  vim.fn.writefile(lines, path)
+end
+
 vim.api.nvim_create_autocmd("BufNewFile", {
   group = vim.api.nvim_create_augroup("FileTemplates", { clear = true }),
   pattern = {
@@ -251,14 +281,11 @@ vim.api.nvim_create_autocmd("BufNewFile", {
     end
 
     local path = vim.api.nvim_buf_get_name(ev.buf)
-    local extension = path:match("%.([%w]+)$")
-    local kind = extension and extension_map[extension:lower()]
-    local build = kind and templates[kind]
-    if not build then
+    local lines, cursor = build_template(path)
+    if not lines then
       return
     end
 
-    local lines, cursor = build(path)
     apply(ev.buf, lines, cursor)
   end,
 })

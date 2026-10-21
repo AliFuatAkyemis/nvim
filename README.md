@@ -234,7 +234,9 @@ empty. Headers get `#ifndef` guards named after the file. C# uses the filename
 as the class name with a `Main(string[] args)` entry point and a file-scoped
 `namespace` derived from the nearest `.csproj` (project name + subfolders);
 without a `.csproj` it emits no namespace. Go, Kotlin and Rust get a bare
-`main`; PHP gets the `<?php` opener. Ruby is intentionally empty.
+`main`; PHP gets the `<?php` opener. Ruby is intentionally empty. Neo-tree
+creates files without opening a buffer, so its `file_added` event feeds
+zero-byte files through the same builder (`seed_file`).
 
 **Filetype layer** — `ftplugin/` and the `FileType` autocmds in
 `config/options.lua` and `lua/plugins/treesitter.lua` attach LSP, indent and
@@ -278,7 +280,7 @@ into CI as-is.
 | `markdown_list_spec` | List parsing, continuation, renumbering |
 | `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
-| `templates_spec` | `BufNewFile` templates for Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP, package detection, existing files untouched |
+| `templates_spec` | `BufNewFile` + `seed_file` templates (Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP), package/namespace detection, existing files untouched |
 
 ---
 

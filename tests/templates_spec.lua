@@ -195,6 +195,37 @@ do
   check(nested_lines[1] == "namespace Api;", "csharp: en yakin csproj kullanilir")
 end
 
+-- Neo-tree tarzi dogrudan dosya olusturma (file_added)
+do
+  local path = tmpdir .. "/neotree/Widget.java"
+  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
+  vim.fn.writefile({}, path)
+  require("config.templates").seed_file(path)
+  check(
+    vim.deep_equal(vim.fn.readfile(path), { "public class Widget {", "", "}" }),
+    "seed_file: bos dosyaya sablon yazar"
+  )
+end
+
+-- seed_file dolu dosyaya dokunmaz
+do
+  local path = tmpdir .. "/neotree/Existing.java"
+  vim.fn.writefile({ "int keep = 1;" }, path)
+  require("config.templates").seed_file(path)
+  check(
+    vim.deep_equal(vim.fn.readfile(path), { "int keep = 1;" }),
+    "seed_file: dolu dosyaya dokunmaz"
+  )
+end
+
+-- seed_file sablonu olmayan uzantiyi bos birakir
+do
+  local path = tmpdir .. "/neotree/notes.txt"
+  vim.fn.writefile({}, path)
+  require("config.templates").seed_file(path)
+  check(vim.fn.getfsize(path) == 0, "seed_file: sablonsuz uzanti bos kalir")
+end
+
 -- Mevcut dosya korunmali
 do
   local path = tmpdir .. "/existing/main.c"
