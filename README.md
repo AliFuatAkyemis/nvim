@@ -27,8 +27,9 @@ Managed by [lazy.nvim](https://github.com/folke/lazy.nvim), themed with
 - **Java (Spring Boot)** — `nvim-jdtls` with Lombok agent, `java-debug-adapter`
   and `java-test` bundles wired straight into jdtls, JUnit run/test keymaps.
 - **New-file templates** — `BufNewFile` skeletons for Java (`package` from
-  `src/main|test/java` + `public class <Name>`), C, C++, headers, C#, Go,
-  Kotlin, Rust and PHP; existing files are never touched.
+  `src/main|test/java` + `public class <Name>`, plus `main` for standalone
+  files), C, C++, headers, C#, Go, Kotlin, Rust and PHP; existing files are
+  never touched.
 - **Markdown / Obsidian** — a hand-written editing core: emphasis toggles,
   links, wikilinks, headings, checkboxes, quotes, and list continuation with
   automatic ordered-list renumbering. Rendered in-buffer by `render-markdown.nvim`.
@@ -229,8 +230,9 @@ exist when the mappings are created, then `config.templates` for the
 **File templates** — `config/templates.lua` seeds a buffer only when it is a
 brand-new, empty file (`BufNewFile` + pristine-buffer check). Java derives the
 `package` line when the path contains `src/main/java` or `src/test/java`, and
-the class name is PascalCased from the filename. Python is intentionally left
-empty. Headers get `#ifndef` guards named after the file. C# uses the filename
+the class name is PascalCased from the filename. Files outside those project
+layouts are treated as standalone and get a `main` method. Python is
+intentionally left empty. Headers get `#ifndef` guards named after the file. C# uses the filename
 as the class name with a `Main(string[] args)` entry point and a file-scoped
 `namespace` derived from the nearest `.csproj` (project name + subfolders);
 without a `.csproj` it emits no namespace. Go, Kotlin and Rust get a bare

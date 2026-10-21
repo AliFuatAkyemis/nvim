@@ -70,11 +70,22 @@ local function java_template(path)
   end
 
   local class_name = pascal_case(vim.fn.fnamemodify(path, ":t:r"))
-  local class_line = #lines + 1
+  local indent = shiftwidth_indent()
   lines[#lines + 1] = "public class " .. class_name .. " {"
+
+  -- Proje dosyasi (package var): bos sinif govdesi.
+  if package then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "}"
+    return lines, { #lines - 1, 0 }
+  end
+
+  -- Tekil dosya: main metodu.
+  lines[#lines + 1] = indent .. "public static void main(String[] args) {"
   lines[#lines + 1] = ""
+  lines[#lines + 1] = indent .. "}"
   lines[#lines + 1] = "}"
-  return lines, { class_line + 1, 0 }
+  return lines, { #lines - 2, 0 }
 end
 
 local function c_template()

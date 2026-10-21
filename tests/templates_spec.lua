@@ -33,14 +33,20 @@ local function newfile(relpath)
   return vim.api.nvim_buf_get_lines(0, 0, -1, false), vim.api.nvim_win_get_cursor(0)
 end
 
--- Java: package yok
+-- Java: package yok (tekil dosya) -> main de eklenir
 do
   local lines, cur = newfile("Foo.java")
   check(
-    vim.deep_equal(lines, { "public class Foo {", "", "}" }),
-    "java: public class + govde satiri"
+    vim.deep_equal(lines, {
+      "public class Foo {",
+      "    public static void main(String[] args) {",
+      "",
+      "    }",
+      "}",
+    }),
+    "java: tekil dosyada class + main"
   )
-  check(vim.deep_equal(cur, { 2, 0 }), "java: imlec govde satirinda")
+  check(vim.deep_equal(cur, { 3, 0 }), "java: imlec main govdesinde")
 end
 
 -- Java: src/main/java altinda package tespiti
@@ -202,7 +208,13 @@ do
   vim.fn.writefile({}, path)
   require("config.templates").seed_file(path)
   check(
-    vim.deep_equal(vim.fn.readfile(path), { "public class Widget {", "", "}" }),
+    vim.deep_equal(vim.fn.readfile(path), {
+      "public class Widget {",
+      "    public static void main(String[] args) {",
+      "",
+      "    }",
+      "}",
+    }),
     "seed_file: bos dosyaya sablon yazar"
   )
 end
