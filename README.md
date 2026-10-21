@@ -106,6 +106,11 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | `<leader>r` | Clear search highlight + redraw |
 | `<leader>up` | Toggle LSP progress |
 
+Telescope prompt input uses readline-style editing: `<C-u>` delete to start,
+`<C-w>` delete word, `<C-k>` delete to end, `<C-e>` end of line, `<C-b>` /
+`<C-f>` one char left / right, `<C-d>` delete forward. `<Esc>` closes the
+picker on the first press.
+
 ### Buffers & Windows
 
 | Key | Action |
@@ -239,7 +244,8 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
 │   │   ├── markdown.lua      # Obsidian-style markdown engine (pure logic)
-│   │   └── lsp_import.lua    # <M-CR> missing-import action + <C-M-CR> action list
+│   │   ├── lsp_import.lua    # <M-CR> missing-import action + <C-M-CR> action list
+│   │   └── prompt_keys.lua   # Telescope prompt readline-style input keys
 │   └── plugins/              # One file per plugin group (lazy specs)
 └── tests/                    # Headless specs
 ```
@@ -300,6 +306,7 @@ nvim --headless -u NONE -l tests/comments_spec.lua
 nvim --headless -u NONE -l tests/terminal_toggle_spec.lua
 nvim --headless -u NONE -l tests/neotree_mapping_spec.lua
 nvim --headless -u NONE -l tests/lsp_import_spec.lua
+nvim --headless -u NONE -l tests/prompt_keys_spec.lua
 ```
 
 Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
@@ -314,6 +321,7 @@ into CI as-is.
 | `templates_spec` | `BufNewFile` + `seed_file` templates (Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP), package/namespace detection, existing files untouched |
 | `comments_spec` | `gc` normal/line/block toggles, formatter-style blocks, `//` round-trip |
 | `lsp_import_spec` | `<M-CR>` diagnostic targeting, import filter, smart candidate pick, `<C-M-CR>` mappings |
+| `prompt_keys_spec` | Telescope prompt readline-style keys and first-press `<Esc>` close |
 
 ---
 
