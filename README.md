@@ -101,6 +101,8 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | `<leader>f` | Format buffer (conform) |
 | `<leader>?` | Buffer-local keymaps (which-key) |
 | `<C-k>` | Floating diagnostic |
+| `<M-CR>` | Add the missing import for the underlined symbol (normal / insert, no menu; picks the module already imported in the file, else the first candidate) |
+| `<C-M-CR>` | All LSP code actions in a Telescope picker (normal / insert; insert leaves insert mode so the prompt is usable) |
 | `<leader>r` | Clear search highlight + redraw |
 | `<leader>up` | Toggle LSP progress |
 
@@ -236,7 +238,8 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
 │   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
-│   │   └── markdown.lua      # Obsidian-style markdown engine (pure logic)
+│   │   ├── markdown.lua      # Obsidian-style markdown engine (pure logic)
+│   │   └── lsp_import.lua    # <M-CR> missing-import action + <C-M-CR> action list
 │   └── plugins/              # One file per plugin group (lazy specs)
 └── tests/                    # Headless specs
 ```
@@ -296,6 +299,7 @@ nvim --headless -u NONE -l tests/templates_spec.lua
 nvim --headless -u NONE -l tests/comments_spec.lua
 nvim --headless -u NONE -l tests/terminal_toggle_spec.lua
 nvim --headless -u NONE -l tests/neotree_mapping_spec.lua
+nvim --headless -u NONE -l tests/lsp_import_spec.lua
 ```
 
 Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
@@ -309,6 +313,7 @@ into CI as-is.
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
 | `templates_spec` | `BufNewFile` + `seed_file` templates (Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP), package/namespace detection, existing files untouched |
 | `comments_spec` | `gc` normal/line/block toggles, formatter-style blocks, `//` round-trip |
+| `lsp_import_spec` | `<M-CR>` diagnostic targeting, import filter, smart candidate pick, `<C-M-CR>` mappings |
 
 ---
 

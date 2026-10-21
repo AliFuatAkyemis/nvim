@@ -15,6 +15,12 @@ vim.keymap.set({ "n", "i", "v", "s", "t" }, "<C-j>", terminal.toggle, { desc = "
 -- Diagnostics
 vim.keymap.set("n", "<C-k>", vim.diagnostic.open_float, { desc = "Open floating diagnostic" })
 
+-- Alt+Enter: alti cizili eksik sembol icin menusuz import.
+-- Ctrl+Alt+Enter: tum LSP code action listesi (insert modda normal moda gecer).
+local lsp_import = require("config.lsp_import")
+vim.keymap.set({ "n", "i" }, "<M-CR>", lsp_import.run, { desc = "Eksik import ekle (LSP)" })
+vim.keymap.set({ "n", "i" }, "<C-M-CR>", lsp_import.actions, { desc = "LSP code action listesi" })
+
 -- General
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Save file" })
 
