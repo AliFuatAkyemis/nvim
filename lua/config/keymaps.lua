@@ -7,6 +7,11 @@ vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
 -- Neo-tree
 vim.keymap.set("n", "<C-n>", ":Neotree filesystem reveal left<CR>", { desc = "Toggle Neo-tree" })
 
+-- Terminal: her zaman metin penceresinin altinda ac/kapat. Metin yoksa mevcut
+-- pencerenin altinda acilir; kapaninca odak metne doner.
+local terminal = require("config.terminal")
+vim.keymap.set({ "n", "i", "v", "s", "t" }, "<C-j>", terminal.toggle, { desc = "Terminal aç/kapat" })
+
 -- Diagnostics
 vim.keymap.set("n", "<C-k>", vim.diagnostic.open_float, { desc = "Open floating diagnostic" })
 
@@ -201,8 +206,14 @@ vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed", "WinEnter", "WinResize
     if is_adjusting then
       return
     end
+    if terminal.layout_busy() then
+      return
+    end
     vim.schedule(function()
       if is_adjusting then
+        return
+      end
+      if terminal.layout_busy() then
         return
       end
       local neotree_win = nil

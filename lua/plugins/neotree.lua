@@ -29,6 +29,11 @@ return {
       },
       filesystem = {
         use_libuv_file_watcher = true,
+        window = {
+          mappings = {
+            ["<leader>j"] = "toggle_node",
+          },
+        },
         filtered_items = {
           visible = false,
           hide_gitignored = true,

@@ -95,6 +95,8 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | `<C-p>` | Find files (Telescope) |
 | `<leader>fg` | Live grep |
 | `<C-n>` | Toggle Neo-tree |
+| `<leader>j` | Neo-tree window: expand/collapse focused node |
+| `<C-j>` | Toggle terminal: opens below the text window (or the current window when no text window is open) in the startup directory; closing returns focus to the text |
 | `<leader>w` | Save file |
 | `<leader>f` | Format buffer (conform) |
 | `<leader>?` | Buffer-local keymaps (which-key) |
@@ -230,6 +232,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── options.lua       # vim.opt, autocmds, htmlangular detection
 │   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
+│   │   ├── terminal.lua      # <C-j> single terminal toggle below the text window
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
 │   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
@@ -242,7 +245,9 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 `config.lazy` (which bootstraps lazy.nvim and imports every module in
 `lua/plugins/`), then `config.keymaps` last so plugin commands like Telescope
 exist when the mappings are created, then `config.templates` for the
-`BufNewFile` autocmd and `config.comments` for `gc`.
+`BufNewFile` autocmd and `config.comments` for `gc`. `config.keymaps` also
+requires `config.terminal`, which captures the startup working directory for
+the `<C-j>` terminal.
 
 **File templates** — `config/templates.lua` seeds a buffer only when it is a
 brand-new, empty file (`BufNewFile` + pristine-buffer check). Java derives the
@@ -289,6 +294,8 @@ nvim --headless -u NONE -l tests/markdown_mapping_spec.lua
 nvim --headless -u NONE -l tests/obsidian_checkbox_spec.lua
 nvim --headless -u NONE -l tests/templates_spec.lua
 nvim --headless -u NONE -l tests/comments_spec.lua
+nvim --headless -u NONE -l tests/terminal_toggle_spec.lua
+nvim --headless -u NONE -l tests/neotree_mapping_spec.lua
 ```
 
 Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
