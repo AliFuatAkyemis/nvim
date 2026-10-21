@@ -62,6 +62,19 @@ check(vim.api.nvim_get_current_win() ~= text_win, "yeniden: odak terminalde")
 
 term.toggle()
 
+-- ------------------------------- odak terminalde degilken kapatmaz, odaklar
+term.toggle()
+vim.api.nvim_set_current_win(text_win)
+term.toggle()
+
+check(#vim.api.nvim_tabpage_list_wins(0) == 2, "odak: terminal acik kalir")
+check(vim.api.nvim_get_current_win() ~= text_win, "odak: terminale gider")
+check(vim.api.nvim_get_current_buf() == term_buf, "odak: terminal buffer'indasin")
+
+term.toggle()
+check(#vim.api.nvim_tabpage_list_wins(0) == 1, "odak: terminaldeyken kapanir")
+check(vim.api.nvim_get_current_win() == text_win, "odak: metne geri doner")
+
 -- ----------------------------------------------------------- shell cikisi
 term.toggle()
 local exit_buf = vim.api.nvim_get_current_buf()
@@ -99,11 +112,33 @@ check(term_pos[2] == text_pos[2], "yan pencere: terminal metin sutununda")
 check(term_pos[1] > text_pos[1], "yan pencere: terminal metin penceresinin altinda")
 check(vim.api.nvim_get_current_win() == side_term_win, "yan pencere: odak terminalde")
 
--- Terminal acikken yan pencereye gecilmis olsa bile kapatma odagi metne verir.
+-- Terminal acikken odak yan penceredeyse kapatmaz, terminale tasir.
 vim.api.nvim_set_current_win(neo_win)
 term.toggle()
-check(vim.api.nvim_get_current_win() == text_win, "yan pencere: kapaninca odak metinde")
+check(vim.api.nvim_get_current_win() == side_term_win, "yan pencere: odak terminale gider")
+check(#vim.api.nvim_tabpage_list_wins(0) == 3, "yan pencere: terminal acik kalir")
+
+-- Terminaldeyken kapatma, terminale gelinen yan pencereye doner.
+term.toggle()
+check(#vim.api.nvim_tabpage_list_wins(0) == 2, "yan pencere: terminaldeyken kapanir")
+check(vim.api.nvim_get_current_win() == neo_win, "yan pencere: cikista neo-tree'ye doner")
 pcall(vim.api.nvim_win_close, neo_win, true)
+
+-- Opencode penceresinden gelindiyse kapatma oraya doner.
+vim.cmd("vsplit")
+local opencode_win = vim.api.nvim_get_current_win()
+local opencode_buf = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_win_set_buf(opencode_win, opencode_buf)
+vim.bo[opencode_buf].filetype = "opencode"
+vim.api.nvim_set_current_win(opencode_win)
+vim.wait(20)
+
+term.toggle()
+check(vim.bo.buftype == "terminal", "opencode: terminal acildi")
+check(vim.api.nvim_get_current_win() ~= opencode_win, "opencode: odak terminalde")
+term.toggle()
+check(vim.api.nvim_get_current_win() == opencode_win, "opencode: cikista opencode'a doner")
+pcall(vim.api.nvim_win_close, opencode_win, true)
 
 -- ------------------------------------------ metin penceresi hic yokken
 vim.cmd("tabnew")

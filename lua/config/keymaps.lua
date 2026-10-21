@@ -205,6 +205,17 @@ vim.g.last_columns = vim.o.columns
 local layout_group = vim.api.nvim_create_augroup("NeotreeLayoutManager", { clear = true })
 local is_adjusting = false
 
+-- Yatay split'teki pencereler ayni kolonu paylasir ve ayni genislige sahiptir.
+-- Genislik orani yalnizca farkli dikey kolonlar arasinda uygulanmali; aksi
+-- halde tek kolon daraltilir ve bosalan yer Neo-tree'ye gider.
+local function distinct_column_count(wins)
+  local columns = {}
+  for _, win in ipairs(wins) do
+    columns[vim.api.nvim_win_get_position(win)[2]] = true
+  end
+  return vim.tbl_count(columns)
+end
+
 -- Automatically enforce widths on layout change (to prevent Neo-tree/Opencode from stretching)
 vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed", "WinEnter", "WinResized" }, {
   group = layout_group,
@@ -290,7 +301,7 @@ vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed", "WinEnter", "WinResize
           end
         end
 
-        if #resize_targets > 1 then
+        if #resize_targets > 1 and distinct_column_count(resize_targets) > 1 then
           local current_win = vim.api.nvim_get_current_win()
           local is_target_focused = false
           for _, win in ipairs(resize_targets) do

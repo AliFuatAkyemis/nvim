@@ -1,4 +1,5 @@
--- Alt split'te tek terminal. <C-j> acar/kapatir; kapaninca odak metne doner.
+-- Alt split'te tek terminal. <C-j> acar/odaklar/kapatir; kapaninca gelinen
+-- pencereye (neo-tree, opencode veya metin) doner.
 local M = {}
 
 -- "Neovim'i baslattigim dizin" semantigi: :cd sonrasi degismez.
@@ -7,6 +8,11 @@ local term_buf = nil
 local text_win = nil
 local last_text_win = nil
 local layout_guard_until = 0
+-- <C-j> ile terminale girilen pencere ve terminal disinda son odaklanan pencere.
+-- Kapatinca terminale nereden gelindiyse oraya donulur.
+local return_win = nil
+local last_focus_win = nil
+local focusing_terminal = false
 
 local function now_ms()
   return (vim.uv or vim.loop).now()
@@ -34,9 +40,45 @@ local function is_text_win(win)
   return ft ~= "neo-tree" and ft ~= "opencode" and ft ~= "opencode_output" and ft ~= "opencode_footer" and ft ~= "lazy"
 end
 
+-- Terminale donus hedefi olabilecek pencereler: gecerli, yüzen olmayan ve
+-- terminal buffer'ini gostermeyen pencereler.
+local function is_returnable_win(win)
+  if not (win and vim.api.nvim_win_is_valid(win)) then
+    return false
+  end
+  if vim.api.nvim_win_get_config(win).relative ~= "" then
+    return false
+  end
+  if term_buf and vim.api.nvim_win_get_buf(win) == term_buf then
+    return false
+  end
+  return true
+end
+
 if is_text_win(vim.api.nvim_get_current_win()) then
   last_text_win = vim.api.nvim_get_current_win()
 end
+if is_returnable_win(vim.api.nvim_get_current_win()) then
+  last_focus_win = vim.api.nvim_get_current_win()
+end
+
+vim.api.nvim_create_autocmd({ "WinEnter", "BufEnter", "TabEnter" }, {
+  group = vim.api.nvim_create_augroup("TerminalReturnFocus", { clear = true }),
+  callback = function()
+    if focusing_terminal then
+      return
+    end
+    local win = vim.api.nvim_get_current_win()
+    if term_buf and vim.api.nvim_win_get_buf(win) == term_buf then
+      -- Terminale baska bir yolla (fare, :wincmd) gelindiyse son odagi hatirla.
+      if is_returnable_win(last_focus_win) and last_focus_win ~= win then
+        return_win = last_focus_win
+      end
+    elseif is_returnable_win(win) then
+      last_focus_win = win
+    end
+  end,
+})
 
 vim.api.nvim_create_autocmd({ "WinEnter", "BufEnter" }, {
   group = vim.api.nvim_create_augroup("TerminalTextFocus", { clear = true }),
@@ -156,31 +198,61 @@ local function start_terminal()
 end
 
 local function close_terminal(term_win)
-  local current = vim.api.nvim_get_current_win()
-  -- Odak baska bir metin penceresindeyse orada kal; yan panel gibi metin
-  -- olmayan bir penceredeyse metin penceresine don.
-  local target = current ~= term_win and is_text_win(current) and current or text_win
+  -- Terminale nereden gelindiyse oraya don: neo-tree, opencode, metin...
+  local target = return_win
+  if not is_returnable_win(target) or target == term_win then
+    target = last_focus_win
+  end
+  if not is_returnable_win(target) or target == term_win then
+    target = find_text_win()
+  end
+  return_win = nil
   pcall(vim.api.nvim_win_close, term_win, false)
-  if target and vim.api.nvim_win_is_valid(target) and target ~= term_win then
+  if is_returnable_win(target) then
     vim.api.nvim_set_current_win(target)
   end
 end
 
+local function focus_terminal(term_win)
+  if is_returnable_win(vim.api.nvim_get_current_win()) then
+    return_win = vim.api.nvim_get_current_win()
+  end
+  focusing_terminal = true
+  vim.api.nvim_set_current_win(term_win)
+  vim.cmd("startinsert")
+  vim.schedule(function()
+    focusing_terminal = false
+  end)
+end
+
 function M.toggle()
   guard_layout()
+  local current = vim.api.nvim_get_current_win()
   local term_win = find_term_win()
+
   if term_win then
-    close_terminal(term_win)
+    if current == term_win then
+      close_terminal(term_win)
+    else
+      focus_terminal(term_win)
+    end
     return
   end
 
+  if is_returnable_win(current) then
+    return_win = current
+  end
+
+  focusing_terminal = true
   if term_buf and vim.api.nvim_buf_is_valid(term_buf) then
     open_split_with(term_buf)
     vim.cmd("startinsert")
-    return
+  else
+    start_terminal()
   end
-
-  start_terminal()
+  vim.schedule(function()
+    focusing_terminal = false
+  end)
 end
 
 return M

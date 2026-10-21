@@ -96,7 +96,7 @@ Leader is <kbd>Space</kbd>; local leader is <kbd>\\</kbd>.
 | `<leader>fg` | Live grep |
 | `<C-n>` | Toggle Neo-tree |
 | `<leader>j` | Neo-tree window: expand/collapse focused node |
-| `<C-j>` | Toggle terminal: opens below the text window (or the current window when no text window is open) in the startup directory; closing returns focus to the text. `<Esc>` leaves Terminal mode for normal-mode scrolling (`hjkl`, `gg/G`, `Ctrl-u/d`, visual selection); `i/I/a/A` return to Terminal mode. In normal mode `<Esc>` is forwarded to the running program (`vim`, `less`, `fzf`) |
+| `<C-j>` | Terminal: opens below the text window (or the current window when no text window is open) in the startup directory; if it is open but unfocused, focuses it; if it is focused, closes it and returns to the window it was entered from (Neo-tree, opencode, or text). `<Esc>` leaves Terminal mode for normal-mode scrolling (`hjkl`, `gg/G`, `Ctrl-u/d`, visual selection); `i/I/a/A` return to Terminal mode. In normal mode `<Esc>` is forwarded to the running program (`vim`, `less`, `fzf`) |
 | `<leader>w` | Save file |
 | `<leader>f` | Format buffer (conform) |
 | `<leader>?` | Buffer-local keymaps (which-key) |
@@ -305,6 +305,7 @@ nvim --headless -u NONE -l tests/templates_spec.lua
 nvim --headless -u NONE -l tests/comments_spec.lua
 nvim --headless -u NONE -l tests/terminal_toggle_spec.lua
 nvim --headless -u NONE -l tests/terminal_normal_mode_spec.lua
+nvim --headless -u NONE -l tests/layout_column_spec.lua
 nvim --headless -u NONE -l tests/neotree_mapping_spec.lua
 nvim --headless -u NONE -l tests/lsp_import_spec.lua
 nvim --headless -u NONE -l tests/prompt_keys_spec.lua
@@ -323,6 +324,7 @@ into CI as-is.
 | `comments_spec` | `gc` normal/line/block toggles, formatter-style blocks, `//` round-trip |
 | `lsp_import_spec` | `<M-CR>` diagnostic targeting, import filter, smart candidate pick, `<C-M-CR>` mappings |
 | `terminal_normal_mode_spec` | Terminal `<Esc>` leaves Terminal mode, normal-mode `<Esc>` reaches the running program, maps stay inside the terminal buffer |
+| `layout_column_spec` | Stacked windows share one column: focusing text/terminal keeps the Neo-tree width; separate columns still resize the focused editor |
 | `prompt_keys_spec` | Telescope prompt readline-style keys and first-press `<Esc>` close |
 
 ---
