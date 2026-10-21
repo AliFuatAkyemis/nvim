@@ -135,6 +135,21 @@ with Kitty Keyboard Protocol support — Alacritty 0.13+).
 | `<C-S-c>` | Copy selection to clipboard (visual) |
 | `<C-S-v>` | Paste from clipboard (normal / visual / insert / cmd) |
 
+### Comments
+
+One key everywhere: `gc`.
+
+| Mode | Action |
+| :-- | :-- |
+| Normal | Toggle `//` on the current line |
+| Visual line, 1 line | Toggle `//` |
+| Visual line, 2+ lines | Formatter-style `/*` + ` * ` block |
+| Visual block | Wrap only the selected part of each line in `/* ... */` |
+
+Blocks are uncommented even after the formatter rewrites them (`*` prefixes,
+spacing or tab variations). `gcc`, `gb`, `gco` and the other Comment.nvim
+mappings are removed; `gc` is the only comment key.
+
 ### Markdown & Obsidian
 
 Active in `markdown` buffers only.
@@ -215,6 +230,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
+│   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
 │   │   └── markdown.lua      # Obsidian-style markdown engine (pure logic)
 │   └── plugins/              # One file per plugin group (lazy specs)
@@ -225,7 +241,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 `config.lazy` (which bootstraps lazy.nvim and imports every module in
 `lua/plugins/`), then `config.keymaps` last so plugin commands like Telescope
 exist when the mappings are created, then `config.templates` for the
-`BufNewFile` autocmd.
+`BufNewFile` autocmd and `config.comments` for `gc`.
 
 **File templates** — `config/templates.lua` seeds a buffer only when it is a
 brand-new, empty file (`BufNewFile` + pristine-buffer check). Java derives the
@@ -271,6 +287,7 @@ nvim --headless -u NONE -l tests/markdown_list_spec.lua
 nvim --headless -u NONE -l tests/markdown_mapping_spec.lua
 nvim --headless -u NONE -l tests/obsidian_checkbox_spec.lua
 nvim --headless -u NONE -l tests/templates_spec.lua
+nvim --headless -u NONE -l tests/comments_spec.lua
 ```
 
 Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
@@ -283,6 +300,7 @@ into CI as-is.
 | `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
 | `templates_spec` | `BufNewFile` + `seed_file` templates (Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP), package/namespace detection, existing files untouched |
+| `comments_spec` | `gc` normal/line/block toggles, formatter-style blocks, `//` round-trip |
 
 ---
 

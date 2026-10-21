@@ -13,3 +13,6 @@ require("config.keymaps")
 
 -- New file skeletons (BufNewFile)
 require("config.templates")
+
+-- Single comment toggle key (gc)
+require("config.comments").setup()
