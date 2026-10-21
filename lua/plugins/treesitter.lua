@@ -49,8 +49,10 @@ return {
           -- Enable Treesitter highlighting
           pcall(vim.treesitter.start, ev.buf, ft)
 
-          -- Enable Treesitter indentation (disabled for web frontends)
-          local disable_indent = { "html", "htmlangular", "angular", "javascript", "typescript", "tsx", "kotlin" }
+          -- Enable Treesitter indentation (disabled for web frontends and java:
+          -- the java indent query cannot handle brace-less if/for/while bodies,
+          -- so rely on the runtime's GetJavaIndent() instead)
+          local disable_indent = { "html", "htmlangular", "angular", "javascript", "typescript", "tsx", "kotlin", "java" }
           if not vim.list_contains(disable_indent, ft) then
             vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
           end
