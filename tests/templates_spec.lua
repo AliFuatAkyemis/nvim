@@ -115,6 +115,86 @@ do
   check(vim.deep_equal(lines, { "" }), "python: sablon yok")
 end
 
+-- C#
+do
+  local lines, cur = newfile("Program.cs")
+  check(
+    vim.deep_equal(lines, {
+      "public class Program",
+      "{",
+      "    public static void Main(string[] args)",
+      "    {",
+      "",
+      "    }",
+      "}",
+    }),
+    "csharp: class + Main iskeleti"
+  )
+  check(cur[1] == 5, "csharp: imlec Main govdesinde")
+end
+
+-- Go
+do
+  local lines = newfile("main.go")
+  check(
+    vim.deep_equal(lines, {
+      "package main",
+      "",
+      "func main() {",
+      "",
+      "}",
+    }),
+    "go: package main + func main"
+  )
+end
+
+-- Kotlin
+do
+  local lines = newfile("Main.kt")
+  check(vim.deep_equal(lines, { "fun main() {", "", "}" }), "kotlin: fun main")
+end
+
+-- Rust
+do
+  local lines = newfile("main.rs")
+  check(vim.deep_equal(lines, { "fn main() {", "", "}" }), "rust: fn main")
+end
+
+-- PHP
+do
+  local lines, cur = newfile("index.php")
+  check(vim.deep_equal(lines, { "<?php", "" }), "php: <?php basligi")
+  check(cur[1] == 2, "php: imlec basligin altinda")
+end
+
+-- Ruby: bos kalmali
+do
+  local lines = newfile("script.rb")
+  check(vim.deep_equal(lines, { "" }), "ruby: sablon yok")
+end
+
+-- C#: csproj bazli namespace
+do
+  local proj = tmpdir .. "/nsproj"
+  vim.fn.mkdir(proj, "p")
+  vim.fn.writefile({ '<Project Sdk="Microsoft.NET.Sdk" />' }, proj .. "/MyApp.csproj")
+
+  local lines = newfile("nsproj/Services/Foo.cs")
+  check(lines[1] == "namespace MyApp.Services;", "csharp: namespace csproj + klasorden")
+  check(lines[2] == "", "csharp: namespace sonrasi bos satir")
+  check(lines[3] == "public class Foo", "csharp: class namespace'ten sonra")
+
+  local root_lines = newfile("nsproj/Bar.cs")
+  check(root_lines[1] == "namespace MyApp;", "csharp: kok dosyada csproj adi")
+
+  -- En yakin csproj kazanir
+  local nested = proj .. "/Modules/Api"
+  vim.fn.mkdir(nested, "p")
+  vim.fn.writefile({ '<Project Sdk="Microsoft.NET.Sdk" />' }, nested .. "/Api.csproj")
+  local nested_lines = newfile("nsproj/Modules/Api/Baz.cs")
+  check(nested_lines[1] == "namespace Api;", "csharp: en yakin csproj kullanilir")
+end
+
 -- Mevcut dosya korunmali
 do
   local path = tmpdir .. "/existing/main.c"

@@ -109,11 +109,107 @@ local function header_template(path)
   }, { 3, 0 }
 end
 
+local function csharp_namespace(path)
+  local dir = vim.fn.fnamemodify(path, ":p:h")
+  local project = vim.fs.find(function(name)
+    return name:match("%.csproj$") ~= nil
+  end, { path = dir, upward = true, type = "file" })[1]
+  if not project then
+    return nil
+  end
+
+  local function segment(value)
+    local clean = value:gsub("[^%w_]", "_")
+    if clean == "" then
+      return nil
+    end
+    if clean:match("^%d") then
+      clean = "_" .. clean
+    end
+    return clean
+  end
+
+  local root = vim.fn.fnamemodify(project, ":h")
+  local parts = { segment(vim.fn.fnamemodify(project, ":t:r")) }
+  local rel = dir:gsub("\\", "/"):sub(#root:gsub("\\", "/") + 1):gsub("^/", "")
+  for part in rel:gmatch("[^/]+") do
+    parts[#parts + 1] = segment(part)
+  end
+
+  local out = {}
+  for _, part in ipairs(parts) do
+    if part then
+      out[#out + 1] = part
+    end
+  end
+  if #out == 0 then
+    return nil
+  end
+  return table.concat(out, ".")
+end
+
+local function csharp_template(path)
+  local indent = shiftwidth_indent()
+  local class_name = pascal_case(vim.fn.fnamemodify(path, ":t:r"))
+  local lines = {}
+  local namespace = csharp_namespace(path)
+  if namespace then
+    lines[#lines + 1] = "namespace " .. namespace .. ";"
+    lines[#lines + 1] = ""
+  end
+  lines[#lines + 1] = "public class " .. class_name
+  lines[#lines + 1] = "{"
+  lines[#lines + 1] = indent .. "public static void Main(string[] args)"
+  lines[#lines + 1] = indent .. "{"
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = indent .. "}"
+  lines[#lines + 1] = "}"
+  return lines, { #lines - 2, 0 }
+end
+
+local function go_template()
+  return {
+    "package main",
+    "",
+    "func main() {",
+    "",
+    "}",
+  }, { 4, 0 }
+end
+
+local function kotlin_template()
+  return {
+    "fun main() {",
+    "",
+    "}",
+  }, { 2, 0 }
+end
+
+local function rust_template()
+  return {
+    "fn main() {",
+    "",
+    "}",
+  }, { 2, 0 }
+end
+
+local function php_template()
+  return {
+    "<?php",
+    "",
+  }, { 2, 0 }
+end
+
 local templates = {
   java = java_template,
   c = c_template,
   cpp = cpp_template,
   header = header_template,
+  csharp = csharp_template,
+  go = go_template,
+  kotlin = kotlin_template,
+  rust = rust_template,
+  php = php_template,
 }
 
 local extension_map = {
@@ -125,11 +221,30 @@ local extension_map = {
   cpp = "cpp",
   cc = "cpp",
   cxx = "cpp",
+  cs = "csharp",
+  go = "go",
+  kt = "kotlin",
+  rs = "rust",
+  php = "php",
 }
 
 vim.api.nvim_create_autocmd("BufNewFile", {
   group = vim.api.nvim_create_augroup("FileTemplates", { clear = true }),
-  pattern = { "*.java", "*.c", "*.h", "*.hpp", "*.hh", "*.cpp", "*.cc", "*.cxx" },
+  pattern = {
+    "*.java",
+    "*.c",
+    "*.h",
+    "*.hpp",
+    "*.hh",
+    "*.cpp",
+    "*.cc",
+    "*.cxx",
+    "*.cs",
+    "*.go",
+    "*.kt",
+    "*.rs",
+    "*.php",
+  },
   callback = function(ev)
     if not is_pristine(ev.buf) then
       return

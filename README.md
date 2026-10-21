@@ -27,8 +27,8 @@ Managed by [lazy.nvim](https://github.com/folke/lazy.nvim), themed with
 - **Java (Spring Boot)** — `nvim-jdtls` with Lombok agent, `java-debug-adapter`
   and `java-test` bundles wired straight into jdtls, JUnit run/test keymaps.
 - **New-file templates** — `BufNewFile` skeletons for Java (`package` from
-  `src/main|test/java` + `public class <Name>`), C, C++ and header guards;
-  existing files are never touched.
+  `src/main|test/java` + `public class <Name>`), C, C++, headers, C#, Go,
+  Kotlin, Rust and PHP; existing files are never touched.
 - **Markdown / Obsidian** — a hand-written editing core: emphasis toggles,
   links, wikilinks, headings, checkboxes, quotes, and list continuation with
   automatic ordered-list renumbering. Rendered in-buffer by `render-markdown.nvim`.
@@ -214,7 +214,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
-│   │   ├── templates.lua     # BufNewFile skeletons (Java/C/C++/headers)
+│   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
 │   │   └── markdown.lua      # Obsidian-style markdown engine (pure logic)
 │   └── plugins/              # One file per plugin group (lazy specs)
 └── tests/                    # Headless specs
@@ -230,7 +230,11 @@ exist when the mappings are created, then `config.templates` for the
 brand-new, empty file (`BufNewFile` + pristine-buffer check). Java derives the
 `package` line when the path contains `src/main/java` or `src/test/java`, and
 the class name is PascalCased from the filename. Python is intentionally left
-empty. Headers get `#ifndef` guards named after the file.
+empty. Headers get `#ifndef` guards named after the file. C# uses the filename
+as the class name with a `Main(string[] args)` entry point and a file-scoped
+`namespace` derived from the nearest `.csproj` (project name + subfolders);
+without a `.csproj` it emits no namespace. Go, Kotlin and Rust get a bare
+`main`; PHP gets the `<?php` opener. Ruby is intentionally empty.
 
 **Filetype layer** — `ftplugin/` and the `FileType` autocmds in
 `config/options.lua` and `lua/plugins/treesitter.lua` attach LSP, indent and
@@ -274,7 +278,7 @@ into CI as-is.
 | `markdown_list_spec` | List parsing, continuation, renumbering |
 | `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
-| `templates_spec` | `BufNewFile` templates for Java/C/C++/headers, package detection, existing files untouched |
+| `templates_spec` | `BufNewFile` templates for Java/C/C++/headers/C#/Go/Kotlin/Rust/PHP, package detection, existing files untouched |
 
 ---
 
