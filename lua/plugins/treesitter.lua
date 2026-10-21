@@ -8,6 +8,7 @@ return {
       -- Parsers to install (grid/add here as needed)
       local ensure_installed = {
         "c",
+        "java",
         "lua",
         "vim",
         "vimdoc",

@@ -1,0 +1,151 @@
+-- Yeni dosya sablonlari.
+-- Sadece BufNewFile ile, yani dosya ilk kez olusturulurken calisir.
+-- Mevcut dosyalara ve dolu buffer'lara dokunmaz.
+
+local M = {}
+
+local function shiftwidth_indent()
+  if vim.o.expandtab then
+    local sw = vim.fn.shiftwidth()
+    if sw < 1 then
+      sw = 4
+    end
+    return string.rep(" ", sw)
+  end
+  return "\t"
+end
+
+-- my-class.java -> MyClass, 2foo.java -> _2foo
+local function pascal_case(stem)
+  local words = {}
+  for word in stem:gmatch("[%w]+") do
+    words[#words + 1] = word:sub(1, 1):upper() .. word:sub(2)
+  end
+  local name = table.concat(words)
+  if name == "" then
+    name = "Main"
+  end
+  if name:match("^%d") then
+    name = "_" .. name
+  end
+  return name
+end
+
+-- src/main/java/com/example/Foo.java -> com.example
+local function java_package(path)
+  local normalized = path:gsub("\\", "/")
+  local rel = normalized:match("src/main/java/(.+)/[^/]+$")
+    or normalized:match("src/test/java/(.+)/[^/]+$")
+  if not rel then
+    return nil
+  end
+  return (rel:gsub("/", "."))
+end
+
+local function header_guard(path)
+  return vim.fn.fnamemodify(path, ":t"):upper():gsub("[^%w]", "_")
+end
+
+local function is_pristine(buf)
+  if vim.bo[buf].modified then
+    return false
+  end
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  return #lines == 1 and lines[1] == ""
+end
+
+local function apply(buf, lines, cursor)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  if vim.api.nvim_get_current_buf() == buf then
+    vim.api.nvim_win_set_cursor(0, cursor)
+  end
+end
+
+local function java_template(path)
+  local lines = {}
+  local package = java_package(path)
+  if package then
+    lines[#lines + 1] = "package " .. package .. ";"
+    lines[#lines + 1] = ""
+  end
+
+  local class_name = pascal_case(vim.fn.fnamemodify(path, ":t:r"))
+  local class_line = #lines + 1
+  lines[#lines + 1] = "public class " .. class_name .. " {"
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "}"
+  return lines, { class_line + 1, 0 }
+end
+
+local function c_template()
+  local indent = shiftwidth_indent()
+  return {
+    "#include <stdio.h>",
+    "",
+    "int main(void) {",
+    indent .. "return 0;",
+    "}",
+  }, { 4, #indent }
+end
+
+local function cpp_template()
+  local indent = shiftwidth_indent()
+  return {
+    "#include <iostream>",
+    "",
+    "int main() {",
+    indent .. "return 0;",
+    "}",
+  }, { 4, #indent }
+end
+
+local function header_template(path)
+  local guard = header_guard(path)
+  return {
+    "#ifndef " .. guard,
+    "#define " .. guard,
+    "",
+    "#endif",
+  }, { 3, 0 }
+end
+
+local templates = {
+  java = java_template,
+  c = c_template,
+  cpp = cpp_template,
+  header = header_template,
+}
+
+local extension_map = {
+  java = "java",
+  c = "c",
+  h = "header",
+  hpp = "header",
+  hh = "header",
+  cpp = "cpp",
+  cc = "cpp",
+  cxx = "cpp",
+}
+
+vim.api.nvim_create_autocmd("BufNewFile", {
+  group = vim.api.nvim_create_augroup("FileTemplates", { clear = true }),
+  pattern = { "*.java", "*.c", "*.h", "*.hpp", "*.hh", "*.cpp", "*.cc", "*.cxx" },
+  callback = function(ev)
+    if not is_pristine(ev.buf) then
+      return
+    end
+
+    local path = vim.api.nvim_buf_get_name(ev.buf)
+    local extension = path:match("%.([%w]+)$")
+    local kind = extension and extension_map[extension:lower()]
+    local build = kind and templates[kind]
+    if not build then
+      return
+    end
+
+    local lines, cursor = build(path)
+    apply(ev.buf, lines, cursor)
+  end,
+})
+
+return M

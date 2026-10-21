@@ -26,6 +26,9 @@ Managed by [lazy.nvim](https://github.com/folke/lazy.nvim), themed with
 
 - **Java (Spring Boot)** — `nvim-jdtls` with Lombok agent, `java-debug-adapter`
   and `java-test` bundles wired straight into jdtls, JUnit run/test keymaps.
+- **New-file templates** — `BufNewFile` skeletons for Java (`package` from
+  `src/main|test/java` + `public class <Name>`), C, C++ and header guards;
+  existing files are never touched.
 - **Markdown / Obsidian** — a hand-written editing core: emphasis toggles,
   links, wikilinks, headings, checkboxes, quotes, and list continuation with
   automatic ordered-list renumbering. Rendered in-buffer by `render-markdown.nvim`.
@@ -211,6 +214,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── lazy.lua          # lazy.nvim bootstrap + { import = "plugins" }
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
+│   │   ├── templates.lua     # BufNewFile skeletons (Java/C/C++/headers)
 │   │   └── markdown.lua      # Obsidian-style markdown engine (pure logic)
 │   └── plugins/              # One file per plugin group (lazy specs)
 └── tests/                    # Headless specs
@@ -219,7 +223,14 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 **Load order** — `init.lua` sets `mapleader` first, then `config.options`, then
 `config.lazy` (which bootstraps lazy.nvim and imports every module in
 `lua/plugins/`), then `config.keymaps` last so plugin commands like Telescope
-exist when the mappings are created.
+exist when the mappings are created, then `config.templates` for the
+`BufNewFile` autocmd.
+
+**File templates** — `config/templates.lua` seeds a buffer only when it is a
+brand-new, empty file (`BufNewFile` + pristine-buffer check). Java derives the
+`package` line when the path contains `src/main/java` or `src/test/java`, and
+the class name is PascalCased from the filename. Python is intentionally left
+empty. Headers get `#ifndef` guards named after the file.
 
 **Filetype layer** — `ftplugin/` and the `FileType` autocmds in
 `config/options.lua` and `lua/plugins/treesitter.lua` attach LSP, indent and
@@ -251,6 +262,7 @@ nvim --headless -u NONE -l tests/keymap_word_nav_spec.lua
 nvim --headless -u NONE -l tests/markdown_list_spec.lua
 nvim --headless -u NONE -l tests/markdown_mapping_spec.lua
 nvim --headless -u NONE -l tests/obsidian_checkbox_spec.lua
+nvim --headless -u NONE -l tests/templates_spec.lua
 ```
 
 Each prints `ok` / `FAIL` lines and exits non-zero on failure, so they drop
@@ -262,6 +274,7 @@ into CI as-is.
 | `markdown_list_spec` | List parsing, continuation, renumbering |
 | `markdown_mapping_spec` | `ftplugin/markdown.lua` bindings |
 | `obsidian_checkbox_spec` | Normal-mode `<Enter>` never creates checkboxes |
+| `templates_spec` | `BufNewFile` templates for Java/C/C++/headers, package detection, existing files untouched |
 
 ---
 

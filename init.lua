@@ -10,3 +10,6 @@ require("config.lazy")
 
 -- Load keymappings after plugins to ensure dependencies like Telescope are available
 require("config.keymaps")
+
+-- New file skeletons (BufNewFile)
+require("config.templates")
