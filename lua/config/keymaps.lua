@@ -95,6 +95,11 @@ vim.keymap.set("n", "<leader>up", function()
   end
 end, { desc = "Toggle LSP progress" })
 
+-- Dismiss all notifications
+vim.keymap.set("n", "<leader>un", function()
+  require("noice").cmd("dismiss")
+end, { desc = "Tüm bildirimleri kapat" })
+
 -- Ctrl+Right: satırın son kelimesindeyken ilk basış kelimenin sonuna,
 -- sonraki basış bir alt satıra geçsin.
 local function ctrl_right()
