@@ -28,6 +28,40 @@ function M.layout_busy()
   return now_ms() < layout_guard_until
 end
 
+-- Terminal yüksekliği pencere yüksekliğine oranlanır: tam ekranda ekranın
+-- ~%28'i, pencere küçüldükçe doğrusal olarak %50'ye çıkar. Sabit satır sayısı
+-- yerine oran kullanmak, tam ekrana geçişte terminalin ekranı kaplamasını
+-- engeller (Neovim büyüyen satırları alt pencerede toplar).
+local TERM_RATIO_LARGE = 0.28 -- TERM_LINES_LARGE ve üstünde
+local TERM_RATIO_SMALL = 0.50 -- TERM_LINES_SMALL ve altında
+local TERM_LINES_LARGE = 50
+local TERM_LINES_SMALL = 24
+
+local function term_height_ratio(lines)
+  if lines <= TERM_LINES_SMALL then
+    return TERM_RATIO_SMALL
+  end
+  if lines >= TERM_LINES_LARGE then
+    return TERM_RATIO_LARGE
+  end
+  local t = (lines - TERM_LINES_SMALL) / (TERM_LINES_LARGE - TERM_LINES_SMALL)
+  return TERM_RATIO_SMALL + (TERM_RATIO_LARGE - TERM_RATIO_SMALL) * t
+end
+
+-- Güncel pencere yüksekliğine göre terminal split'inin hedef yüksekliği.
+-- Üstteki metin penceresine en az 1 satır, statusline'a 1 satır bırakılır.
+function M.target_height()
+  local max_height = math.max(1, vim.o.lines - vim.o.cmdheight - 2)
+  return math.max(1, math.min(max_height, math.floor(vim.o.lines * term_height_ratio(vim.o.lines))))
+end
+
+local function apply_term_height(win)
+  if not (win and vim.api.nvim_win_is_valid(win)) then
+    return
+  end
+  pcall(vim.api.nvim_win_set_height, win, M.target_height())
+end
+
 local function is_text_win(win)
   if not (win and vim.api.nvim_win_is_valid(win)) then
     return false
@@ -162,9 +196,28 @@ local function open_split_with(buf)
   vim.cmd("belowright split")
   local term_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(term_win, buf)
-  pcall(vim.api.nvim_win_set_height, term_win, 12)
+  -- UI yeniden boyutlanirken alt pencerenin tüm yeni satırları yutmasını
+  -- engelle; yüksekliği VimResized'da orana göre yeniden uyguluyoruz.
+  vim.wo[term_win].winfixheight = true
+  apply_term_height(term_win)
   return term_win
 end
+
+-- Tam ekran giriş/çıkışı ve pencere boyutu değişimlerinde terminal
+-- yüksekliğini güncel yüksekliğe göre yeniden hesapla.
+vim.api.nvim_create_autocmd("VimResized", {
+  group = vim.api.nvim_create_augroup("TerminalHeight", { clear = true }),
+  callback = function()
+    if not (term_buf and vim.api.nvim_buf_is_valid(term_buf)) then
+      return
+    end
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_get_buf(win) == term_buf then
+        apply_term_height(win)
+      end
+    end
+  end,
+})
 
 local function start_terminal()
   local buf = vim.api.nvim_create_buf(false, true)

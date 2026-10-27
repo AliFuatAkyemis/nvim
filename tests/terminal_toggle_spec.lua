@@ -206,5 +206,51 @@ vim.wait(300)
 check(vim.api.nvim_win_get_width(stable_neo_win) == neo_width_before, "neo: terminal kapaninca genislik degismez")
 pcall(vim.api.nvim_win_close, stable_neo_win, true)
 
+-- -------------------------------------- oranli yükseklik (pencere boyutu)
+-- Terminal yüksekliği sabit satır değil, pencere yüksekliğine oranlı olmalı:
+-- tam ekranda ~%28, pencere küçüldükçe doğrusal olarak %50'ye çıkar.
+-- Gerçek UI resize'ında VimResized otomatik tetiklenir; headless'ta elle
+-- tetikliyoruz (bkz. pty ile doğrulanan tam ekran davranışı).
+local function term_height()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].buftype == "terminal" then
+      return vim.api.nvim_win_get_height(win)
+    end
+  end
+end
+
+local function resize_window(lines)
+  vim.o.lines = lines
+  vim.cmd("doautocmd VimResized")
+  vim.wait(100)
+end
+
+term.toggle()
+vim.wait(150)
+
+resize_window(24)
+local h_small = term_height()
+check(h_small == 12, "yükseklik: 24 satırda 12 satır (~%50)")
+
+resize_window(60)
+local h_full = term_height()
+check(h_full == term.target_height(), "yükseklik: 60 satırda hedef yükseklik")
+check(h_full == 16, "yükseklik: 60 satırda 16 satır (~%28)")
+check(h_full <= math.floor(60 * 0.30), "yükseklik: 60 satırda ekranın %30'unu geçmez")
+check(h_full > h_small, "yükseklik: büyük pencerede mutlak yükseklik artar")
+
+resize_window(40)
+local h_mid = term_height()
+check(h_mid == term.target_height(), "yükseklik: 40 satırda hedef yükseklik")
+check(h_mid == 14, "yükseklik: 40 satırda 14 satır (doğrusal ara değer)")
+check(h_mid > h_small and h_mid < h_full, "yükseklik: ara boyutta ara yükseklik")
+
+resize_window(60)
+check(term_height() == 16, "yükseklik: tekrar büyüyünce güncellenir")
+
+resize_window(24)
+check(term_height() == 12, "yükseklik: tekrar küçülünce %50'ye döner")
+term.toggle()
+
 io.write(string.format("\n%d/%d gecti, %d basarisiz\n", total - failures, total, failures))
 os.exit(failures == 0 and 0 or 1)

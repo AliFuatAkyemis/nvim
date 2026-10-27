@@ -19,6 +19,7 @@ return {
         "clangd",
         "gopls",
         "rust-analyzer",
+        "roslyn-language-server",
         "bash-language-server",
         "dockerfile-language-server",
         "yaml-language-server",
