@@ -69,6 +69,7 @@ return {
           end, { "i", "s" }),
         }),
         sources = cmp.config.sources({
+          { name = "unitykit", priority = 1000 },
           { name = "nvim_lsp" },
           { name = "luasnip", dup = 1 },
         }, {

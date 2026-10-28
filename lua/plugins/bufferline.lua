@@ -11,6 +11,9 @@ return {
         show_close_icon = true,
         diagnostics = "nvim_lsp",
         always_show_bufferline = true,
+        custom_filter = function(buf)
+          return require("config.empty_buffer").is_bufferline_visible(buf)
+        end,
       },
     },
   },
