@@ -154,6 +154,73 @@ reset_buffers()
 local only_empty = vim.api.nvim_get_current_buf()
 check(empty.is_bufferline_visible(only_empty) == true, "bufferline: dosya yokken [No Name] gorunur")
 
+-- 10) Placeholder normal, listed ve isimsiz buffer olmali; nofile scratch degil.
+reset_buffers()
+vim.cmd("silent! %bwipeout!")
+local placeholder = empty.ensure_placeholder()
+check(placeholder ~= nil, "placeholder: buffer olusturulur")
+check(placeholder and vim.api.nvim_buf_is_valid(placeholder), "placeholder: gecerli buffer")
+check(placeholder and vim.bo[placeholder].buftype == "", "placeholder: normal buffer (buftype bos)")
+check(placeholder and vim.bo[placeholder].buflisted, "placeholder: listed")
+check(placeholder and vim.api.nvim_buf_get_name(placeholder) == "", "placeholder: isimsiz")
+check(placeholder and not vim.bo[placeholder].modified, "placeholder: degismemis")
+check(placeholder and vim.api.nvim_win_get_buf(0) == placeholder, "placeholder: pencerede gorunur")
+
+-- 11) Dosya acilinca placeholder silinir; yerine tek dosya sekmesi gelir.
+local first_file = new_file()
+vim.cmd("edit " .. vim.fn.fnameescape(first_file))
+vim.wait(500, function()
+  return count_empty_listed() == 0
+end, 10)
+check(
+  not vim.api.nvim_buf_is_valid(placeholder) or vim.api.nvim_buf_get_name(placeholder) == first_file,
+  "dosya acilinca placeholder silinir veya dosyaya donusur"
+)
+check(count_empty_listed() == 0, "dosya acikken placeholder kalmaz")
+check(
+  vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()) == first_file,
+  "dosya placeholder'in yerine gelir"
+)
+
+-- 12) Ikinci dosya yeni sekme olarak eklenir; placeholder geri gelmez.
+local second_file = new_file()
+vim.cmd("edit " .. vim.fn.fnameescape(second_file))
+vim.wait(300, function()
+  return false
+end, 10)
+check(count_empty_listed() == 0, "ikinci dosyada placeholder olusmaz")
+check(vim.bo[vim.fn.bufnr(first_file)].buflisted, "ilk dosya listede kalir")
+check(vim.bo[vim.fn.bufnr(second_file)].buflisted, "ikinci dosya listede")
+
+-- 13) Tek dosya kalinca kapatilirsa placeholder geri gelir.
+empty.close_current_buffer()
+vim.wait(300, function()
+  return count_empty_listed() > 0
+end, 10)
+check(count_empty_listed() == 0, "bir dosya acikken placeholder olusmaz")
+
+empty.close_current_buffer()
+vim.wait(500, function()
+  return count_empty_listed() == 1
+end, 10)
+check(count_empty_listed() == 1, "son dosya kapaninca placeholder olusur")
+local restored = nil
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  if is_empty_listed(buf) then
+    restored = buf
+    break
+  end
+end
+check(restored ~= nil and vim.bo[restored].buftype == "", "geri gelen placeholder normal buffer")
+
+-- 14) Placeholder varken yeni dosya acilinca scratch birikmez.
+local third_file = new_file()
+vim.cmd("edit " .. vim.fn.fnameescape(third_file))
+vim.wait(500, function()
+  return count_empty_listed() == 0
+end, 10)
+check(count_empty_listed() == 0, "placeholder uzerine dosya acilinca scratch birikmez")
+
 if failures > 0 then
   io.write(string.format("\n%d/%d test basarisiz\n", failures, total))
   os.exit(1)

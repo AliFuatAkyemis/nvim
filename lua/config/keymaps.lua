@@ -49,39 +49,11 @@ end
 vim.keymap.set("n", "L", buf_nav("bnext"), { desc = "Next buffer" })
 vim.keymap.set("n", "H", buf_nav("bprevious"), { desc = "Previous buffer" })
 
--- Close buffer without closing the split window/layout
-local function close_buffer()
-  local current_buf = vim.api.nvim_get_current_buf()
-  local current_win = vim.api.nvim_get_current_win()
-
-  -- Don't close special buffers (like Neo-tree, Opencode)
-  local ft = vim.bo[current_buf].filetype
-  if ft == "neo-tree" or ft == "opencode" or ft == "opencode_output" or ft == "opencode_footer" then
-    return
-  end
-
-  -- Get all listed buffers
-  local bufs = vim.api.nvim_list_bufs()
-  local alternate_buf = nil
-  for _, buf in ipairs(bufs) do
-    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted and buf ~= current_buf then
-      alternate_buf = buf
-      break
-    end
-  end
-
-  if alternate_buf then
-    vim.api.nvim_win_set_buf(current_win, alternate_buf)
-  else
-    -- Create an empty scratch buffer
-    local scratch = vim.api.nvim_create_buf(true, true)
-    vim.api.nvim_win_set_buf(current_win, scratch)
-  end
-
-  -- Delete the original buffer
-  pcall(vim.api.nvim_buf_delete, current_buf, { force = false })
-end
-vim.keymap.set("n", "<leader>x", close_buffer, { desc = "Close buffer (keep layout)" })
+-- Close buffer without closing the split window/layout. Son dosya kapanirsa
+-- config.empty_buffer [No Name] placeholder'i geri getirir.
+vim.keymap.set("n", "<leader>x", function()
+  require("config.empty_buffer").close_current_buffer()
+end, { desc = "Close buffer (keep layout)" })
 vim.keymap.set("n", "<leader>bp", ":BufferLineTogglePin<CR>", { desc = "Toggle pin buffer" })
 
 -- Toggle LSP progress

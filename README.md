@@ -327,7 +327,7 @@ into CI as-is.
 | `terminal_normal_mode_spec` | Terminal `<Esc>` leaves Terminal mode, normal-mode `<Esc>` reaches the running program, maps stay inside the terminal buffer |
 | `layout_column_spec` | Stacked windows share one column: focusing text/terminal keeps the Neo-tree width; separate columns still resize the focused editor |
 | `prompt_keys_spec` | Telescope prompt readline-style keys and first-press `<Esc>` close |
-| `empty_buffer_spec` | Leftover `[No Name]` buffer/tab is removed after a file opens (including startup), kept when no file is open |
+| `empty_buffer_spec` | Leftover `[No Name]` buffer/tab is removed after a file opens (including startup), restored as a normal placeholder when the last file closes, kept when no file is open |
 
 ---
 

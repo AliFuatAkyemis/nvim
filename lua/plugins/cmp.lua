@@ -40,8 +40,41 @@ return {
           ["<C-e>"] = cmp.mapping.abort(),
           ["<CR>"] = cmp.mapping({
             i = function(fallback)
-              if cmp.visible() and cmp.get_active_entry() then
+              local cursor = vim.api.nvim_win_get_cursor(0)
+              local before = vim.api.nvim_get_current_line():sub(1, cursor[2])
+              local typing = before:match("[%w_]$") ~= nil
+              if not cmp.visible() then
+                fallback()
+                return
+              end
+              local entry = cmp.get_selected_entry()
+              local entry_row = entry
+                and entry.context
+                and entry.context.cursor
+                and entry.context.cursor.row
+              if entry and entry_row == cursor[1] then
                 cmp.confirm({ select = true })
+                return
+              end
+              -- Stale entries from another line: confirming deletes every line
+              -- between (nvim-cmp core.confirm). Drop them and, if a word was
+              -- typed here, re-query and confirm the fresh first match.
+              cmp.abort()
+              if typing then
+                cmp.complete()
+                vim.defer_fn(function()
+                  if vim.api.nvim_get_mode().mode:sub(1, 1) ~= "i" then
+                    return
+                  end
+                  local fresh = cmp.get_selected_entry()
+                  local fresh_row = fresh
+                    and fresh.context
+                    and fresh.context.cursor
+                    and fresh.context.cursor.row
+                  if fresh and fresh_row == vim.api.nvim_win_get_cursor(0)[1] then
+                    cmp.confirm({ select = true })
+                  end
+                end, 100)
               else
                 fallback()
               end

@@ -39,6 +39,67 @@ local function first_named_file()
   return nil
 end
 
+local function first_empty_unnamed()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if is_empty_unnamed(buf) then
+      return buf
+    end
+  end
+  return nil
+end
+
+-- Acik dosya yokken bufferline'da duran [No Name] sekmesini garanti eder.
+-- Placeholder normal bir buffer'dir; dosya acilinca cleanup onu silebilir.
+function M.ensure_placeholder(win)
+  if first_named_file() then
+    return nil
+  end
+
+  local buf = first_empty_unnamed()
+  if not buf then
+    buf = vim.api.nvim_create_buf(true, false)
+  end
+
+  if win and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) ~= buf then
+    pcall(vim.api.nvim_win_set_buf, win, buf)
+  end
+
+  return buf
+end
+
+-- <leader>x: mevcut dosyayi kapat, yerine alternatif dosya veya [No Name]
+-- placeholder birak. Placeholder nofile scratch degil, normal buffer olmali.
+function M.close_current_buffer()
+  local current_buf = vim.api.nvim_get_current_buf()
+  local current_win = vim.api.nvim_get_current_win()
+
+  local ft = vim.bo[current_buf].filetype
+  if ft == "neo-tree" or ft == "opencode" or ft == "opencode_output" or ft == "opencode_footer" then
+    return
+  end
+
+  local alternate = nil
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted and buf ~= current_buf then
+      alternate = buf
+      break
+    end
+  end
+
+  if alternate then
+    vim.api.nvim_win_set_buf(current_win, alternate)
+  end
+
+  pcall(vim.api.nvim_buf_delete, current_buf, { force = false })
+
+  -- Silme basarisizsa (degismis dosya) dosya hala acik; placeholder kurma.
+  vim.schedule(function()
+    if not first_named_file() then
+      M.ensure_placeholder(current_win)
+    end
+  end)
+end
+
 -- Sadece bos buffer'lardan olusan tabpage'leri kapatir. Ornek: Unity/Neovide
 -- dosyayi ayri sekmede acinca ilk [No Name] sekmesi arkada kalir.
 local function close_empty_tabpages()
@@ -129,6 +190,19 @@ function M.setup()
     group = group,
     callback = function()
       vim.schedule(M.cleanup)
+    end,
+  })
+
+  -- Bufferline kapatma ikonu veya :bdelete ile son dosya kapanirsa
+  -- [No Name] placeholder geri gelsin.
+  vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
+    group = group,
+    callback = function()
+      vim.schedule(function()
+        if not first_named_file() then
+          M.ensure_placeholder()
+        end
+      end)
     end,
   })
 
