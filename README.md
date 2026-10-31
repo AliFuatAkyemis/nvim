@@ -241,6 +241,7 @@ Buffer-local, loaded from `ftplugin/java.lua`.
 │   │   ├── keymaps.lua       # Global keymaps + layout manager
 │   │   ├── terminal.lua      # <C-j> terminal toggle + terminal-normal <Esc> mode
 │   │   ├── indent.lua        # Custom indentexpr (VSCode onEnterRules)
+│   │   ├── indent_sync.lua   # Formatter config → buffer indent sync
 │   │   ├── comments.lua      # Single gc comment toggle (formatter-aware)
 │   │   ├── templates.lua     # BufNewFile skeletons (9 languages)
 │   │   ├── markdown.lua      # Obsidian-style markdown engine (pure logic)
@@ -297,6 +298,7 @@ The specs run against a **clean** Neovim (`-u NONE`) and load only the code
 under test:
 
 ```bash
+nvim --headless -u NONE -l tests/indent_sync_spec.lua
 nvim --headless -u NONE -l tests/keymap_word_nav_spec.lua
 nvim --headless -u NONE -l tests/markdown_list_spec.lua
 nvim --headless -u NONE -l tests/markdown_mapping_spec.lua
@@ -353,8 +355,37 @@ return {
 }
 ```
 
-**Formatters** — extend `formatters_by_ft` in `lua/plugins/conform.lua`.
-Markdown is intentionally excluded so Prettier cannot re-wrap prose.
+**Formatters** — `lua/plugins/conform.lua` owns the per-filetype list;
+`lua/config/indent_sync.lua` keeps the buffer's indent settings equal to what
+the formatter will produce, so typing and saving never disagree.
+
+| Filetypes | Formatter | Indent source |
+| :-- | :-- | :-- |
+| `c`, `cpp`, `objc`, `objcpp` | `clang_format` | `.clang-format` (`clang-format --dump-config`), else buffer/global |
+| `javascript`, `typescript`, `*react`, `html`, `htmlangular`, `css`, `scss`, `less`, `json`, `jsonc`, `yaml` | `prettier` | prettier config (JSON or `resolveConfig`), else buffer/global |
+| `lua` | `stylua` | `stylua.toml` |
+| `kotlin` | `ktlint` | `.editorconfig` (built-in Neovim support) |
+| `go` | LSP fallback (`gopls`) | gofmt standard: tabs, tabstop 4 |
+| `rust` | LSP fallback (`rust-analyzer`) | `rustfmt.toml`, else 4 spaces |
+| `java` | LSP fallback (`jdtls`) | jdtls / project settings |
+
+Precedence: project formatter config → `.editorconfig` → global 4 spaces.
+When a project config exists the formatter gets no indent arguments (it reads
+its own config); otherwise the arguments are generated from the buffer
+options, so both sides use the same width. Every resolver is wrapped in
+`pcall` with timeouts, and failures fall back to the current buffer options —
+a bad or missing config never blocks editing or saving. Markdown is
+intentionally excluded so Prettier cannot re-wrap prose.
+
+**Line width** — 120 columns by default, still project-first:
+
+| Language | Behaviour |
+| :-- | :-- |
+| C/C++ no project config | `ColumnLimit: 120` |
+| Prettier | `--print-width 120` unless the project config sets `printWidth` |
+| Rust | `max_width=120` unless `rustfmt.toml` sets `max_width` |
+| Java | jdtls default is already 120; project settings untouched |
+| Go / Kotlin | gofmt and ktlint do not reflow lines |
 
 **Lombok** — resolved in this order: `./lib/lombok.jar` in the current project
 → `~/.config/nvim/lib/lombok.jar` → the jar bundled with jdtls.

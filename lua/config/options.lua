@@ -53,12 +53,14 @@ vim.g.lsp_progress_show = false
 -- Indentation for HTML/JSX/TSX
 -- Treesitter indent is disabled for these filetypes.
 -- Custom indentexpr (VSCode onEnterRules mantığı) Enter/o/O'da doğru indent sağlar.
--- equalprg routes the = operator through Prettier, so gg=G / == / visual =
--- all produce the same result as <leader>f.
 do
   local indent_mod = require("config.indent")
   _G.WebIndent = indent_mod.get_indent -- indentexpr string referansı için global olmalı
 end
+
+-- Formatter config'i ile buffer indent ayarlarını hizala. Yazarken görünen
+-- girinti ile kayıt sonrası format aynı genişliği kullanır.
+require("config.indent_sync").setup()
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "html", "htmlangular", "javascript", "typescript", "javascriptreact", "typescriptreact" },
@@ -68,20 +70,6 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.smartindent = false
     -- Re-indent tetikleyen karakterler: }, ), ], kapanış tag için >, else, catch
     vim.opt_local.indentkeys = "0{,0},0(,0),0[,0],0<,0>,:,!^F,o,O,0=else,0=catch"
-
-    -- Map filetype -> prettier parser
-    local parsers = {
-      javascript = "babel",
-      javascriptreact = "babel",
-      typescript = "typescript",
-      typescriptreact = "babel-ts",
-      html = "html",
-    }
-    local parser = parsers[vim.bo.filetype]
-    -- We removed equalprg assignment because prettier outputs errors directly to the buffer
-    -- if there is a syntax error (like unclosed bracket).
-    -- conform.nvim already handles formatting safely.
-    -- vim.opt_local.equalprg = "prettier --parser " .. parser .. " --tab-width 4"
   end,
 })
 

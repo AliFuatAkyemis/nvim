@@ -72,6 +72,20 @@ return {
         },
       })
 
+      -- Rust: proje rustfmt.toml'i max_width belirtmiyorsa 120 kullan.
+      -- Proje degeri varsa dokunulmaz.
+      vim.lsp.config("rust_analyzer", {
+        before_init = function(_, config)
+          local root = (config and config.root_dir) or vim.fn.getcwd()
+          local args = require("config.indent_sync").rustfmt_width_args(root)
+          config.settings = config.settings or {}
+          local ra = config.settings["rust-analyzer"] or {}
+          ra.rustfmt = ra.rustfmt or {}
+          ra.rustfmt.extraArgs = args
+          config.settings["rust-analyzer"] = ra
+        end,
+      })
+
       vim.lsp.config("kotlin_language_server", {
         cmd_env = {
           ANDROID_HOME = "/opt/android-sdk",
