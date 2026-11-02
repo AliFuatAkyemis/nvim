@@ -11,7 +11,7 @@ return {
       { name = "personal",         path = vim.fn.expand("~/NextCloud/Vaults/Personal-Vault") },
       { name = "lectures",         path = vim.fn.expand("~/NextCloud/School/Lectures-Vault") },
       { name = "maneviai",         path = vim.fn.expand("~/NextCloud/Vaults/ManeviAI-Vault") },
-      { name = "game-noter",       path = vim.fn.expand("~/NextCloud/GameNoter/GameNoter-Vault") },
+      { name = "gamenoter",        path = vim.fn.expand("~/NextCloud/Projects/GameNoter/GameNoter-Vault") },
       { name = "paptakip",         path = vim.fn.expand("~/Documents/Karamanlar_Business/pap_dokumanlari/PapTakip-Vault") },
       { name = "karamanlar-panel", path = vim.fn.expand("~/Documents/Karamanlar_Business/karamanlar_panel_dokumanlari/KaramanlarPanel-Vault") },
     },
