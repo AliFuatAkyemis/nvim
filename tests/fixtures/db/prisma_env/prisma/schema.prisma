@@ -1,0 +1,4 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("SPECIAL_DB_URL")
+}
