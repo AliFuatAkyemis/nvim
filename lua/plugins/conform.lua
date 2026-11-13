@@ -32,6 +32,7 @@ return {
       jsonc = { "prettier" },
       yaml = { "prettier" },
       kotlin = { "ktlint" },
+      sql = { "sqlfluff" },
       -- NOTE: markdown kasitli olarak listelenmez. Obsidian tarzi ham yazim
       -- icin prettier otomatik formatlamasi kaldirildi (bkz. format_on_save).
     }
@@ -56,6 +57,9 @@ return {
         local timeout = 500
         if ft == "kotlin" or ft == "java" then
           timeout = 3000
+        elseif ft == "sql" then
+          -- sqlfluff (Python) acilisi yavas; 500ms yetmiyor.
+          timeout = 5000
         end
         return { timeout_ms = timeout, lsp_format = "fallback" }
       end,
@@ -76,6 +80,12 @@ return {
           prepend_args = function(_, ctx)
             return { indent_sync.clang_style(ctx.buf) }
           end,
+        },
+        -- Global ~/.config/sqlfluff/.sqlfluff yeterli; proje kokunde config
+        -- dosyasi yoksa da calissin (varsayilan require_cwd bunu engelliyor).
+        sqlfluff = {
+          require_cwd = false,
+          args = { "fix", "--disable-progress-bar", "-" },
         },
       },
     }

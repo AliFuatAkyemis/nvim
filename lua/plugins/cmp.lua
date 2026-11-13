@@ -23,6 +23,9 @@ return {
       -- Force load lazy-loaded snippets for the current buffer
       require("luasnip.loaders").load_lazy_loaded(vim.api.nvim_get_current_buf())
 
+      -- SQL: kendi snippet'ler (tip/fonksiyon verisi LSP'den gelir)
+      require("config.sql_assist").setup()
+
       cmp.setup({
         snippet = {
           expand = function(args)
@@ -104,6 +107,7 @@ return {
         sources = cmp.config.sources({
           { name = "unitykit", priority = 1000 },
           { name = "nvim_lsp" },
+          { name = "pg_types", priority = 900 },
           { name = "luasnip", dup = 1 },
         }, {
           { name = "buffer" },

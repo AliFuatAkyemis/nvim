@@ -29,6 +29,8 @@ return {
         "htmlhint",
         "kotlin-language-server",
         "ktlint",
+        "postgres-language-server",
+        "sqlfluff",
       },
     },
     config = function(_, opts)
@@ -271,6 +273,27 @@ return {
               end
             end
           end
+        end,
+      })
+
+      -- SQL: postgres-language-server (PostgreSQL LSP).
+      -- Tablo/kolon/fonksiyon/tip bilgisi DB'den otomatik gelir. Baglanti
+      -- sirasiyla: DATABASE_URL/PG* ortam degiskenleri, proje kokundeki
+      -- .env.local / .env icindeki DATABASE_URL, postgres-language-server.jsonc.
+      -- Baglanti yoksa pgls completion vermez.
+      vim.lsp.config("postgres_lsp", {
+        filetypes = { "sql" },
+        cmd = function(dispatchers, config)
+          local root = config and config.root_dir
+          return vim.lsp.rpc.start(
+            { "postgres-language-server", "lsp-proxy" },
+            dispatchers,
+            { env = require("config.pg_env").environ(root) }
+          )
+        end,
+        root_dir = function(bufnr, on_dir)
+          local root = vim.fs.root(bufnr, { "postgres-language-server.jsonc", ".git" })
+          on_dir(root or vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr)))
         end,
       })
 
