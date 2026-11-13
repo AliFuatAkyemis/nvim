@@ -212,7 +212,9 @@ git commit -m "feat(db): add minimal YAML reader"
 ```lua
 local env = require("config.db.adapters.env")
 local dotenv = require("config.db.adapters.dotenv")
+local fs = require("config.db.fs")
 
+local root = vim.fn.getcwd()
 vim.env.DATABASE_URL = "postgresql://u:p@h:5432/db"
 eq(env.detect(root).kind, "postgres", "env DATABASE_URL")
 eq(env.detect(root).source, "env:DATABASE_URL", "env kaynak etiketi")
@@ -246,7 +248,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lua/config/db/adapters/env.lua lua/config/db/adapters/dotenv.lua tests/db_adapters_env_spec.lua tests/fixtures/db/dotenv
+git add lua/config/db/fs.lua lua/config/db/adapters/env.lua lua/config/db/adapters/dotenv.lua tests/db_adapters_env_spec.lua tests/fixtures/db/dotenv
 git commit -m "feat(db): add env and dotenv adapters"
 ```
 
