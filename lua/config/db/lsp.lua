@@ -47,4 +47,16 @@ function M.override(kind)
   return nil
 end
 
+---@param kind string|nil
+---@return string|nil
+function M.attach_kind(kind)
+  if kind == "postgres" then
+    return "postgres_lsp"
+  end
+  if kind == "mysql" or kind == "sqlite" then
+    return "sqls"
+  end
+  return nil
+end
+
 return M

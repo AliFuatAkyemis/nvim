@@ -51,10 +51,7 @@ return {
                 return
               end
               local entry = cmp.get_selected_entry()
-              local entry_row = entry
-                and entry.context
-                and entry.context.cursor
-                and entry.context.cursor.row
+              local entry_row = entry and entry.context and entry.context.cursor and entry.context.cursor.row
               if entry and entry_row == cursor[1] then
                 cmp.confirm({ select = true })
                 return
@@ -70,10 +67,7 @@ return {
                     return
                   end
                   local fresh = cmp.get_selected_entry()
-                  local fresh_row = fresh
-                    and fresh.context
-                    and fresh.context.cursor
-                    and fresh.context.cursor.row
+                  local fresh_row = fresh and fresh.context and fresh.context.cursor and fresh.context.cursor.row
                   if fresh and fresh_row == vim.api.nvim_win_get_cursor(0)[1] then
                     cmp.confirm({ select = true })
                   end
