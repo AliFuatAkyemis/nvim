@@ -80,6 +80,10 @@ eq(url.mask("postgresql://u@h/db"), "postgresql://u@h/db", "parolasiz dsn degism
 eq(url.mask("postgresql://u:p/ss@h/db"), "postgresql://u:***@h/db", "parolada / maskelenir")
 eq(url.mask("postgresql://u:p?ss@h/db"), "postgresql://u:***@h/db", "parolada ? maskelenir")
 eq(url.mask("postgresql://u:p#ss@h/db"), "postgresql://u:***@h/db", "parolada # maskelenir")
+eq(url.mask("postgresql://h/db?user=a:b@c"), "postgresql://h/db?user=a:b@c", "query icindeki @ maskelenmez")
+local sanitized, password = url.without_password("postgresql://u:p%40ss%3Aword@h/db")
+eq(sanitized, "postgresql://u@h/db", "without_password argv'den parolayi cikarir")
+eq(password, "p@ss:word", "without_password yuzde kodunu cozer")
 
 eq(
   url.parse("postgresql://u@h/db?ssl=true"),

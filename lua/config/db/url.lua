@@ -417,17 +417,26 @@ end
 ---@param rest string
 ---@return integer|nil @ pozisyonu
 local function userinfo_at(rest)
+  local stop = rest:find("[?#]")
   local init = 1
   while true do
     local slash = rest:find("/", init, true)
-    local limit = slash and slash - 1 or #rest
-    local chunk = rest:sub(1, limit)
+    if not slash then
+      if stop then
+        return nil
+      end
+      local chunk = rest
+      local at = chunk:match("^.*()@")
+      if at and not chunk:sub(at + 1):find("@", 1, true) then
+        return at
+      end
+      return nil
+    end
+
+    local chunk = rest:sub(1, slash - 1)
     local at = chunk:match("^.*()@")
     if at and not chunk:sub(at + 1):find("@", 1, true) then
       return at
-    end
-    if not slash then
-      return nil
     end
     init = slash + 1
   end
@@ -453,7 +462,7 @@ function M.without_password(dsn)
   if not user then
     return dsn, nil
   end
-  return prefix .. user .. rest:sub(at), password
+  return prefix .. user .. rest:sub(at), password and decode_component(password) or nil
 end
 
 ---Authority icindeki parolayi *** ile maskeler; diger girdiler degismez.

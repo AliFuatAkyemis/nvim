@@ -106,7 +106,7 @@ local function refresh()
   vim.defer_fn(function()
     for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
       local ft = vim.bo[bufnr].filetype
-      if ft == "sql" or ft == "mysql" then
+      if (ft == "sql" or ft == "mysql") and vim.api.nvim_buf_is_loaded(bufnr) then
         vim.b[bufnr].sql_type_override = nil
         vim.api.nvim_buf_call(bufnr, function()
           vim.cmd("doautocmd FileType " .. ft)
