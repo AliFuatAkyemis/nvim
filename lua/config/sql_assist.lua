@@ -88,32 +88,60 @@ end
 function source:complete(params, callback)
   local context = params.context
   local bufnr = context.bufnr
-  if vim.bo[bufnr].filetype ~= "sql" or not in_ddl(context) then
+  if vim.bo[bufnr].filetype ~= "sql" then
     callback({ items = {}, isIncomplete = false })
     return
   end
 
+  local ddl = in_ddl(context)
   local conn = detect.connection(bufnr)
-  local names
-  if conn and conn.kind == "postgres" and vim.fn.executable("psql") == 1 then
-    names = postgres_types(conn.dsn)
-    if #names == 0 then
-      -- Sorgu sürüyor veya başarısız: statik listeyle devam et.
-      names = types.static("postgres")
-    end
-  else
-    names = types.static(conn and conn.kind or nil)
-    if not conn and not M.warned then
-      M.warned = true
-      vim.notify("SQL: DB baglantisi yok, statik tip listesi kullaniliyor.", vim.log.levels.INFO)
-    end
+  if not ddl and conn then
+    -- Bağlantı varsa keyword/schema önerileri pgls'ten gelir.
+    callback({ items = {}, isIncomplete = false })
+    return
   end
 
   local kinds = require("cmp.types").lsp.CompletionItemKind
   local items = {}
-  for _, label in ipairs(names) do
-    items[#items + 1] = { label = label, kind = kinds.TypeParameter }
+  local seen = {}
+
+  ---@param label string
+  ---@param kind integer
+  local function add(label, kind)
+    if not seen[label] then
+      seen[label] = true
+      items[#items + 1] = { label = label, kind = kind }
+    end
   end
+
+  if ddl then
+    local names
+    if conn and conn.kind == "postgres" and vim.fn.executable("psql") == 1 then
+      names = postgres_types(conn.dsn)
+      if #names == 0 then
+        names = types.static("postgres")
+      end
+    else
+      names = types.static(conn and conn.kind or nil)
+    end
+    for _, label in ipairs(names) do
+      add(label, kinds.TypeParameter)
+    end
+    for _, label in ipairs(types.ddl_keywords) do
+      add(label, kinds.Keyword)
+    end
+  end
+
+  if not conn then
+    for _, label in ipairs(types.keywords) do
+      add(label, kinds.Keyword)
+    end
+    if not M.warned then
+      M.warned = true
+      vim.notify("SQL: DB baglantisi yok, statik tip/keyword listesi kullaniliyor.", vim.log.levels.INFO)
+    end
+  end
+
   callback({ items = items, isIncomplete = false })
 end
 

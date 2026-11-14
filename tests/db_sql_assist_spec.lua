@@ -15,7 +15,7 @@ package.loaded["cmp"] = {
     registered[name] = true
   end,
 }
-package.loaded["cmp.types"] = { lsp = { CompletionItemKind = { TypeParameter = 25 } } }
+package.loaded["cmp.types"] = { lsp = { CompletionItemKind = { TypeParameter = 25, Keyword = 14 } } }
 package.loaded["luasnip"] = {
   snippet = function(opts, body)
     return { trigger = opts.trig, body = body }
@@ -70,8 +70,20 @@ for _, item in ipairs(ddl) do
 end
 check(labels["VARCHAR"], "statik yedekte VARCHAR")
 check(labels["UUID"], "statik yedekte UUID")
+check(labels["DEFAULT"], "DDL keyword DEFAULT")
 
-eq(#items({ "select  from t;" }, 1), 0, "DDL disinda bos")
+local ddl_kinds = {}
+for _, item in ipairs(ddl) do
+  ddl_kinds[item.label] = item.kind
+end
+eq(ddl_kinds["DEFAULT"], 14, "DEFAULT keyword kind")
+
+local dml = items({ "select  from t;" }, 1)
+local dml_labels = {}
+for _, item in ipairs(dml) do
+  dml_labels[item.label] = true
+end
+check(dml_labels["SELECT"], "DB yokken keyword yedegi")
 
 assist.setup()
 check(registered.db_types, "db_types kayitli")
