@@ -54,7 +54,15 @@ return {
           -- so rely on the runtime's GetJavaIndent() instead)
           local disable_indent =
             { "html", "htmlangular", "angular", "javascript", "typescript", "tsx", "kotlin", "java" }
-          if not vim.list_contains(disable_indent, ft) then
+
+          if ft == "yaml" then
+            -- YAML indent query'si yok; Neovim'in standart GetYAMLIndent()'i
+            -- "key:" sonrasi girinti ekler, "key: value" sonrasi eklemez.
+            if vim.fn.exists("*GetYAMLIndent") == 0 then
+              vim.cmd("runtime! indent/yaml.vim")
+            end
+            vim.bo[ev.buf].indentexpr = "GetYAMLIndent(v:lnum)"
+          elseif not vim.list_contains(disable_indent, ft) then
             vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
           end
         end,
