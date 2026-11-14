@@ -167,7 +167,7 @@ local function mapped(mode)
 end
 
 for _, mode in ipairs({ "n", "i", "v", "s", "t" }) do
-  check(mapped(mode).desc == "Terminal aç/kapat", "<C-j> " .. mode .. " modunda terminal toggle")
+  check(mapped(mode).desc == "Toggle terminal", "<C-j> " .. mode .. " modunda terminal toggle")
 end
 check(vim.fn.maparg(leader_j, "n", false, true).desc == nil, "<leader>j terminal degil")
 
