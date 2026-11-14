@@ -281,7 +281,7 @@ function M.run()
     end
 
     if #entries == 0 then
-      vim.notify("Import aksiyonu bulunamadi", vim.log.levels.INFO)
+      vim.notify("No import action found", vim.log.levels.INFO)
       return
     end
 
@@ -310,7 +310,7 @@ function M.actions()
   vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params_fn(bufnr, pos, diag), function(results)
     local entries = M.action_entries(results)
     if #entries == 0 then
-      vim.notify("Code action bulunamadi", vim.log.levels.INFO)
+      vim.notify("No code action found", vim.log.levels.INFO)
       return
     end
     M.show_actions(entries, bufnr)

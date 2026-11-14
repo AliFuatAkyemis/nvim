@@ -34,8 +34,7 @@ end
 -- src/main/java/com/example/Foo.java -> com.example
 local function java_package(path)
   local normalized = path:gsub("\\", "/")
-  local rel = normalized:match("src/main/java/(.+)/[^/]+$")
-    or normalized:match("src/test/java/(.+)/[^/]+$")
+  local rel = normalized:match("src/main/java/(.+)/[^/]+$") or normalized:match("src/test/java/(.+)/[^/]+$")
   if not rel then
     return nil
   end

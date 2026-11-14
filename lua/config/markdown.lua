@@ -6,10 +6,10 @@
 local M = {}
 
 M.styles = {
-  bold      = { left = "**", right = "**" },
-  italic    = { left = "*",  right = "*"  },
-  code      = { left = "`",  right = "`"  },
-  strike    = { left = "~~", right = "~~" },
+  bold = { left = "**", right = "**" },
+  italic = { left = "*", right = "*" },
+  code = { left = "`", right = "`" },
+  strike = { left = "~~", right = "~~" },
   highlight = { left = "==", right = "==" },
 }
 
@@ -48,10 +48,7 @@ local function make_keyword_check()
     end
     if alpha then
       -- ASCII harfler + Latin-1 + Latin Extended-A/B (ş, ğ, ı, İ vb. dahil)
-      if (cp >= 65 and cp <= 90)
-        or (cp >= 97 and cp <= 122)
-        or (cp >= 0x100 and cp <= 0x24F)
-      then
+      if (cp >= 65 and cp <= 90) or (cp >= 97 and cp <= 122) or (cp >= 0x100 and cp <= 0x24F) then
         return true
       end
     end
@@ -214,7 +211,8 @@ local function toggle_visual(style)
   end
   local sel = get_visual_text(g)
   local newsel, added
-  if sel ~= ""
+  if
+    sel ~= ""
     and sel:sub(1, #style.left) == style.left
     and sel:sub(-#style.right) == style.right
     and #sel > #style.left + #style.right
@@ -247,10 +245,7 @@ local function find_span(line, c, style)
   -- Bitişik boş çift: `… d | d …` (örn. henüz yazılmamış `**|**`). Genel
   -- tarayıcı bunu tek bir `****` koşusu olarak görüp atlar, o yüzden burada
   -- ayrıca yakalanır.
-  if c >= len
-    and line:sub(c - len + 1, c) == d
-    and line:sub(c + 1, c + len) == d
-  then
+  if c >= len and line:sub(c - len + 1, c) == d and line:sub(c + 1, c + len) == d then
     return { opener = c - len, inner_s = c, closer = c }
   end
   local occ = {}
@@ -298,11 +293,7 @@ local function toggle_normal_or_insert(style, insert)
 
   local sp = find_span(line, c, style)
   local p = pending[bufnr]
-  local is_pending = p ~= nil
-    and p.style == style
-    and p.lnum == lnum
-    and sp ~= nil
-    and sp.opener == p.opener
+  local is_pending = p ~= nil and p.style == style and p.lnum == lnum and sp ~= nil and sp.opener == p.opener
 
   if is_pending then
     local inner = line:sub(sp.inner_s + 1, sp.closer)
@@ -526,8 +517,7 @@ local function parse_list_prefix(line)
   if not line or line == "" then
     return nil
   end
-  local indent, bullet, gap, state, sep, text =
-    line:match("^(%s*)([-*+])(%s+)%[([%sxX>~!])%](%s*)(.*)$")
+  local indent, bullet, gap, state, sep, text = line:match("^(%s*)([-*+])(%s+)%[([%sxX>~!])%](%s*)(.*)$")
   if indent then
     return { kind = "checkbox", indent = indent, bullet = bullet, gap = gap, sep = sep, text = text }
   end

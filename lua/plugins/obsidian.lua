@@ -8,12 +8,18 @@ return {
   ft = "markdown",
   opts = {
     workspaces = {
-      { name = "personal",         path = vim.fn.expand("~/NextCloud/Vaults/Personal-Vault") },
-      { name = "lectures",         path = vim.fn.expand("~/NextCloud/School/Lectures-Vault") },
-      { name = "maneviai",         path = vim.fn.expand("~/NextCloud/Vaults/ManeviAI-Vault") },
-      { name = "gamenoter",        path = vim.fn.expand("~/NextCloud/Projects/GameNoter/GameNoter-Vault") },
-      { name = "paptakip",         path = vim.fn.expand("~/Documents/Karamanlar_Business/pap_dokumanlari/PapTakip-Vault") },
-      { name = "karamanlar-panel", path = vim.fn.expand("~/Documents/Karamanlar_Business/karamanlar_panel_dokumanlari/KaramanlarPanel-Vault") },
+      { name = "personal", path = vim.fn.expand("~/NextCloud/Vaults/Personal-Vault") },
+      { name = "lectures", path = vim.fn.expand("~/NextCloud/School/Lectures-Vault") },
+      { name = "maneviai", path = vim.fn.expand("~/NextCloud/Vaults/ManeviAI-Vault") },
+      { name = "gamenoter", path = vim.fn.expand("~/NextCloud/Projects/GameNoter/GameNoter-Vault") },
+      {
+        name = "paptakip",
+        path = vim.fn.expand("~/Documents/Karamanlar_Business/pap_dokumanlari/PapTakip-Vault"),
+      },
+      {
+        name = "karamanlar-panel",
+        path = vim.fn.expand("~/Documents/Karamanlar_Business/karamanlar_panel_dokumanlari/KaramanlarPanel-Vault"),
+      },
     },
     -- Vault dışındaki dosyalarda yeni not mevcut dosyanın yanına
     new_notes_location = "current_dir",

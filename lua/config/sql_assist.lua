@@ -138,7 +138,7 @@ function source:complete(params, callback)
     end
     if not M.warned then
       M.warned = true
-      vim.notify("SQL: DB baglantisi yok, statik tip/keyword listesi kullaniliyor.", vim.log.levels.INFO)
+      vim.notify("SQL: no DB connection, using static type/keyword list.", vim.log.levels.INFO)
     end
   end
 
@@ -175,8 +175,8 @@ function M.setup()
 
   vim.api.nvim_create_user_command("DbTypesRefresh", function()
     cache = {}
-    vim.notify("SQL tip onerileri yenilenecek", vim.log.levels.INFO)
-  end, { desc = "SQL tip onbellegini temizle" })
+    vim.notify("Refreshing SQL type cache", vim.log.levels.INFO)
+  end, { desc = "Clear SQL type cache" })
 
   -- Dosya açılışında PG tip listesini önceden ısıt.
   local function prefetch(bufnr)

@@ -362,7 +362,7 @@ return {
               local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
               client:request("textDocument/hover", params, function(err, result)
                 if err then
-                  vim.notify("KLS hover hatası: " .. tostring(err.message), vim.log.levels.WARN)
+                  vim.notify("KLS hover error: " .. tostring(err.message), vim.log.levels.WARN)
                   return
                 end
                 if result and result.contents then
@@ -370,15 +370,15 @@ return {
                   vim.lsp.buf.hover()
                 else
                   -- KLS null döndü → indexing devam ediyor olabilir
-                  vim.notify("⏳ KLS indeksleniyor, 1.5s içinde tekrar deneniyor...", vim.log.levels.INFO)
+                  vim.notify("⏳ KLS is indexing, retrying in 1.5s...", vim.log.levels.INFO)
                   vim.defer_fn(function()
                     client:request("textDocument/hover", params, function(_, result2)
                       if result2 and result2.contents then
                         vim.lsp.buf.hover()
                       else
                         vim.notify(
-                          "ℹ️ Bu sembol için hover dokümantasyonu yok.\n"
-                            .. "KLS indeksleme sürüyorsa biraz bekleyin.",
+                          "ℹ️ No hover documentation for this symbol.\n"
+                            .. "If KLS is still indexing, wait a moment.",
                           vim.log.levels.WARN
                         )
                       end

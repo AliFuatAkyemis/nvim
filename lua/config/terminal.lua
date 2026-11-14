@@ -157,7 +157,7 @@ local function find_term_win()
   return nil
 end
 
--- Terminal-normal mod: terminalde Esc normal moda gecirir; normal modda Esc
+-- Terminal normal mode: terminalde Esc normal moda gecirir; normal modda Esc
 -- calisan uygulamaya ESC bayti olarak gider. Mapler yalnizca terminal buffer'ina
 -- ozeldir, metin pencerelerini etkilemez.
 local function send_escape_to_job()
@@ -175,8 +175,8 @@ local function attach_terminal_maps(buf)
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "terminal" then
     return
   end
-  vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = buf, desc = "Terminal-normal mod" })
-  vim.keymap.set("n", "<Esc>", send_escape_to_job, { buffer = buf, desc = "Esc'i terminal uygulamasina gonder" })
+  vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = buf, desc = "Terminal normal mode" })
+  vim.keymap.set("n", "<Esc>", send_escape_to_job, { buffer = buf, desc = "Send Esc to terminal application" })
 end
 
 vim.api.nvim_create_autocmd("TermOpen", {
@@ -241,7 +241,7 @@ local function start_terminal()
 
   if not ok then
     pcall(vim.api.nvim_win_close, term_win, true)
-    vim.notify("Terminal baslatilamadi: " .. tostring(err), vim.log.levels.ERROR)
+    vim.notify("Failed to start terminal: " .. tostring(err), vim.log.levels.ERROR)
     return
   end
 

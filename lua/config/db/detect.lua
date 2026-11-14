@@ -58,12 +58,12 @@ end
 local function type_source(bufnr)
   local conn = M.connection(bufnr)
   if not conn then
-    return "statik yedek (PG)"
+    return "static fallback (PG)"
   end
   if conn.kind == "postgres" and vim.fn.executable("psql") == 1 then
-    return "canli pg_type katalogu"
+    return "live pg_type catalog"
   end
-  return "statik yedek (" .. conn.kind .. ")"
+  return "static fallback (" .. conn.kind .. ")"
 end
 
 local function info()
@@ -72,9 +72,9 @@ local function info()
   local lines = {}
 
   if not conn then
-    lines[#lines + 1] = "SQL DB: baglanti bulunamadi"
-    lines[#lines + 1] = "Tip kaynagi: " .. type_source(bufnr)
-    lines[#lines + 1] = "LSP: yok (snippet + statik tipler)"
+    lines[#lines + 1] = "SQL DB: no connection found"
+    lines[#lines + 1] = "Type source: " .. type_source(bufnr)
+    lines[#lines + 1] = "LSP: none (snippets + static types)"
     vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
     return
   end
@@ -85,13 +85,13 @@ local function info()
   end
 
   lines[#lines + 1] = "SQL DB: " .. conn.kind
-  lines[#lines + 1] = "Kaynak: " .. conn.source
-  lines[#lines + 1] = "Kok: " .. conn.root
+  lines[#lines + 1] = "Source: " .. conn.source
+  lines[#lines + 1] = "Root: " .. conn.root
   lines[#lines + 1] = "DSN: " .. url.mask(conn.dsn)
-  lines[#lines + 1] = "LSP: " .. (#clients > 0 and table.concat(clients, ", ") or "yok")
-  lines[#lines + 1] = "Tip kaynagi: " .. type_source(bufnr)
+  lines[#lines + 1] = "LSP: " .. (#clients > 0 and table.concat(clients, ", ") or "none")
+  lines[#lines + 1] = "Type source: " .. type_source(bufnr)
   if conn.kind == "postgres" then
-    lines[#lines + 1] = "Not: pgls daemon env'i ilk acilista alir; DSN degistiyse daemon'i yeniden baslat."
+    lines[#lines + 1] = "Note: pgls daemon captures env at first start; restart it after changing the DSN."
   end
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 end
@@ -113,13 +113,13 @@ local function refresh()
         end)
       end
     end
-    vim.notify("DB tespiti yenilendi", vim.log.levels.INFO)
+    vim.notify("DB detection refreshed", vim.log.levels.INFO)
   end, 200)
 end
 
 function M.setup()
-  vim.api.nvim_create_user_command("DbDetectInfo", info, { desc = "SQL DB tespit bilgisi" })
-  vim.api.nvim_create_user_command("DbDetectRefresh", refresh, { desc = "SQL DB tespitini yenile" })
+  vim.api.nvim_create_user_command("DbDetectInfo", info, { desc = "SQL DB detection info" })
+  vim.api.nvim_create_user_command("DbDetectRefresh", refresh, { desc = "Refresh SQL DB detection" })
 end
 
 return M
