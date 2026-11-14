@@ -32,7 +32,7 @@ return {
       jsonc = { "prettier" },
       yaml = { "prettier" },
       kotlin = { "ktlint" },
-      sql = { "sqlfluff" },
+      sql = { "sqlfluff", "sql_align" },
       -- NOTE: markdown kasitli olarak listelenmez. Obsidian tarzi ham yazim
       -- icin prettier otomatik formatlamasi kaldirildi (bkz. format_on_save).
     }
@@ -86,6 +86,13 @@ return {
         sqlfluff = {
           require_cwd = false,
           args = { "fix", "--disable-progress-bar", "-" },
+        },
+        -- CREATE TABLE kolon adi/tip/constraint kolonlarini hizalar.
+        -- sqlfluff'tan sonra calisir; cok satirli tanimlara dokunmaz.
+        sql_align = {
+          format = function(_, _, lines, callback)
+            callback(nil, require("config.sql_align").align(lines))
+          end,
         },
       },
     }
