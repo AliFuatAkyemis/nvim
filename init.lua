@@ -5,6 +5,9 @@ vim.g.maplocalleader = "\\"
 -- Load the core configurations
 require("config.options")
 
+-- SQL DB detection commands (:DbDetectInfo, :DbDetectRefresh)
+require("config.db.detect").setup()
+
 -- Hide Roslyn's unused-private-member warning for Unity message methods only
 require("config.unity_diagnostics").setup()
 

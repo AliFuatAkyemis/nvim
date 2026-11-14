@@ -54,12 +54,12 @@ local function press(keys)
 end
 
 -- --------------------------------------------------------------- kelime atlama
-check(effective("n", "<C-h>").desc == "Önceki kelime (<C-Left>)", "normal <C-h> bizim mapping")
-check(effective("i", "<C-h>").desc == "Önceki kelime (<C-Left>)", "insert <C-h> bizim mapping")
-check(effective("n", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "normal <C-l> bizim mapping")
-check(effective("i", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "insert <C-l> bizim mapping")
-check(effective("x", "<C-h>").desc == "Önceki kelime (<C-Left>)", "visual <C-h> bizim mapping")
-check(effective("x", "<C-l>").desc == "Sonraki kelime (<C-Right>)", "visual <C-l> bizim mapping")
+check(effective("n", "<C-h>").desc == "Previous word (<C-Left>)", "normal <C-h> bizim mapping")
+check(effective("i", "<C-h>").desc == "Previous word (<C-Left>)", "insert <C-h> bizim mapping")
+check(effective("n", "<C-l>").desc == "Next word (<C-Right>)", "normal <C-l> bizim mapping")
+check(effective("i", "<C-l>").desc == "Next word (<C-Right>)", "insert <C-l> bizim mapping")
+check(effective("x", "<C-h>").desc == "Previous word (<C-Left>)", "visual <C-h> bizim mapping")
+check(effective("x", "<C-l>").desc == "Next word (<C-Right>)", "visual <C-l> bizim mapping")
 
 -- Ok tuslari korunur (regresyon): <C-Right> hala tanimli olmali.
 check(effective("n", "<C-Right>").desc ~= "", "normal <C-Right> korunur")

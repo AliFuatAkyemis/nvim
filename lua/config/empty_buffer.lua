@@ -8,8 +8,7 @@ local function is_blank(buf)
   if not vim.api.nvim_buf_is_loaded(buf) then
     return true
   end
-  return vim.api.nvim_buf_line_count(buf) == 1
-    and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ""
+  return vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ""
 end
 
 local function is_empty_unnamed(buf)

@@ -10,16 +10,16 @@ vim.keymap.set("n", "<C-n>", ":Neotree filesystem reveal left<CR>", { desc = "To
 -- Terminal: her zaman metin penceresinin altinda ac/kapat. Metin yoksa mevcut
 -- pencerenin altinda acilir; kapaninca odak metne doner.
 local terminal = require("config.terminal")
-vim.keymap.set({ "n", "i", "v", "s", "t" }, "<C-j>", terminal.toggle, { desc = "Terminal aç/kapat" })
+vim.keymap.set({ "n", "i", "v", "s", "t" }, "<C-j>", terminal.toggle, { desc = "Toggle terminal" })
 
 -- Diagnostics
 vim.keymap.set("n", "<C-k>", vim.diagnostic.open_float, { desc = "Open floating diagnostic" })
 
 -- Alt+Enter: alti cizili eksik sembol icin menusuz import.
--- Ctrl+Alt+Enter: tum LSP code action listesi (insert modda normal moda gecer).
+-- Ctrl+Alt+Enter: tum LSP code action list (insert modda normal moda gecer).
 local lsp_import = require("config.lsp_import")
-vim.keymap.set({ "n", "i" }, "<M-CR>", lsp_import.run, { desc = "Eksik import ekle (LSP)" })
-vim.keymap.set({ "n", "i" }, "<C-M-CR>", lsp_import.actions, { desc = "LSP code action listesi" })
+vim.keymap.set({ "n", "i" }, "<M-CR>", lsp_import.run, { desc = "Add missing import (LSP)" })
+vim.keymap.set({ "n", "i" }, "<C-M-CR>", lsp_import.actions, { desc = "LSP code action list" })
 
 -- General
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Save file" })
@@ -28,10 +28,10 @@ vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Save file" })
 -- y/p  → yalnızca Neovim'in iç register'ı (sistem clipboard'una dokunmaz)
 -- "+y  → sistem clipboard'una kopyala (normal: mevcut satır, visual: seçili alan)
 -- "+p  → sistem clipboard'undan yapıştır
-vim.keymap.set("n", "<leader>y", '"+yy', { desc = "Sistem clipboard'una satırı kopyala" })
-vim.keymap.set("v", "<leader>y", '"+y', { desc = "Sistem clipboard'una seçimi kopyala" })
-vim.keymap.set("n", "<leader>p", '"+p', { desc = "Sistem clipboard'undan yapıştır (sonra)" })
-vim.keymap.set("n", "<leader>P", '"+P', { desc = "Sistem clipboard'undan yapıştır (önce)" })
+vim.keymap.set("n", "<leader>y", '"+yy', { desc = "Copy line to system clipboard" })
+vim.keymap.set("v", "<leader>y", '"+y', { desc = "Copy selection to system clipboard" })
+vim.keymap.set("n", "<leader>p", '"+p', { desc = "Paste from system clipboard (after)" })
+vim.keymap.set("n", "<leader>P", '"+P', { desc = "Paste from system clipboard (before)" })
 -- jk -> ESC mapping kaldırıldı: insert modunda "j" yazarken timeoutlen
 -- kadar gecikmeye (Neovim jk sequence bekler) neden oluyordu.
 -- ESC veya <C-[> kullanın.
@@ -60,17 +60,17 @@ vim.keymap.set("n", "<leader>bp", ":BufferLineTogglePin<CR>", { desc = "Toggle p
 vim.keymap.set("n", "<leader>up", function()
   if vim.g.lsp_progress_show == false then
     vim.g.lsp_progress_show = true
-    vim.notify("LSP Progress Gösteriliyor", vim.log.levels.INFO)
+    vim.notify("LSP progress shown", vim.log.levels.INFO)
   else
     vim.g.lsp_progress_show = false
-    vim.notify("LSP Progress Gizlendi", vim.log.levels.INFO)
+    vim.notify("LSP progress hidden", vim.log.levels.INFO)
   end
 end, { desc = "Toggle LSP progress" })
 
 -- Dismiss all notifications
 vim.keymap.set("n", "<leader>un", function()
   require("noice").cmd("dismiss")
-end, { desc = "Tüm bildirimleri kapat" })
+end, { desc = "Dismiss all notifications" })
 
 -- Ctrl+Right: satırın son kelimesindeyken ilk basış kelimenin sonuna,
 -- sonraki basış bir alt satıra geçsin.
@@ -117,7 +117,7 @@ local function ctrl_right()
 
   vim.api.nvim_win_set_cursor(win, wpos)
 end
-vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Sonraki kelime (satır sonunda kelime sonuna git)" })
+vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Next word (to word end at line end)" })
 
 -- <C-h> / <C-l>: pratik klavye için <C-Left> / <C-Right> alias'ları.
 -- Ok tuşları (<C-Left>/<C-Right>) değişmez; yalnızca alias eklenir.
@@ -125,17 +125,17 @@ vim.keymap.set({ "n", "i" }, "<C-Right>", ctrl_right, { desc = "Sonraki kelime (
 -- <C-h> normal, insert ve görsel modlarda (visual/visual-line/visual-block)
 -- yerleşik <C-Left>'e devredilir. Böylece davranış ok tuşuyla birebir aynı
 -- kalır; insert modda artık metin silmez (bkz. Ctrl+Backspace notu aşağıda).
-vim.keymap.set({ "n", "i", "x" }, "<C-h>", "<C-Left>", { desc = "Önceki kelime (<C-Left>)" })
+vim.keymap.set({ "n", "i", "x" }, "<C-h>", "<C-Left>", { desc = "Previous word (<C-Left>)" })
 
 -- <C-l>: normal/insert modda mevcut özel fonksiyon (satır sonunda kelime
 -- sonuna durur). Görsel modlarda seçimi bozmamak için yerleşik <C-Right>.
-vim.keymap.set({ "n", "i" }, "<C-l>", ctrl_right, { desc = "Sonraki kelime (<C-Right>)" })
-vim.keymap.set("x", "<C-l>", "<C-Right>", { desc = "Sonraki kelime (<C-Right>)" })
+vim.keymap.set({ "n", "i" }, "<C-l>", ctrl_right, { desc = "Next word (<C-Right>)" })
+vim.keymap.set("x", "<C-l>", "<C-Right>", { desc = "Next word (<C-Right>)" })
 -- <C-l> artık kelime atlama olduğu için varsayılan işi (arama vurgusunu
 -- temizle + redraw) buraya alındı.
 vim.keymap.set("n", "<leader>r", function()
   vim.cmd("nohlsearch | diffupdate | normal! <C-L>")
-end, { desc = "Aramayı temizle + redraw" })
+end, { desc = "Clear search + redraw" })
 
 -- Ctrl+Backspace (kelime sil). Insert modda <C-H> artık "önceki kelime"
 -- hareketi olduğu için burada tanımlanmaz; kelime silme, Kitty Keyboard
@@ -148,7 +148,7 @@ vim.keymap.set("c", "<C-BS>", "<C-W>", { noremap = true, silent = true })
 -- Insert modda <C-a> varsayılan olarak "önceki yazılan metni ekle" demek; satır
 -- başına gitmez (Neo-tree popup'ları, rename/move girdileri insert modda açılır).
 -- Terminal/readline alışkanlığıyla satır başına dönmek için <Home>'a bağlandı.
-vim.keymap.set("i", "<C-a>", "<Home>", { desc = "Satır başı (insert)" })
+vim.keymap.set("i", "<C-a>", "<Home>", { desc = "Line start (insert)" })
 
 -- Fix Ctrl+Delete to delete next word
 vim.keymap.set("i", "<C-Del>", "<C-o>dw", { noremap = true, silent = true })

@@ -147,11 +147,7 @@ local function unwrap_inline(line, sel_start, sel_end)
 end
 
 local function wrap_inline(line, sel_start, sel_end)
-  local wrapped = line:sub(1, sel_start - 1)
-    .. "/* "
-    .. line:sub(sel_start, sel_end)
-    .. " */"
-    .. line:sub(sel_end + 1)
+  local wrapped = line:sub(1, sel_start - 1) .. "/* " .. line:sub(sel_start, sel_end) .. " */" .. line:sub(sel_end + 1)
   return wrapped, sel_start, sel_end + 6
 end
 

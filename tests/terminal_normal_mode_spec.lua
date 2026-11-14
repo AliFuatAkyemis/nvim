@@ -42,7 +42,7 @@ check(t_esc.rhs == "<C-\\><C-n>", "t modu Esc terminal-normal moda gecer")
 
 -- Normal modda Esc, calisan uygulamaya ESC bayti gondermeli.
 local n_esc = vim.fn.maparg("<Esc>", "n", false, true)
-check(n_esc.desc == "Esc'i terminal uygulamasina gonder", "n modu Esc calisan uygulamaya gonderir")
+check(n_esc.desc == "Send Esc to terminal application", "n modu Esc calisan uygulamaya gonderir")
 
 if n_esc.callback then
   n_esc.callback()

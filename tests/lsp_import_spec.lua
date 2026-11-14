@@ -175,9 +175,9 @@ dofile(root .. "/lua/config/keymaps.lua")
 local function map_desc(lhs, mode)
   return vim.fn.maparg(lhs, mode, false, true).desc
 end
-check(map_desc("<M-CR>", "n") == "Eksik import ekle (LSP)", "normal <M-CR> import mapping")
-check(map_desc("<M-CR>", "i") == "Eksik import ekle (LSP)", "insert <M-CR> import mapping")
-check(map_desc("<C-M-CR>", "n") == "LSP code action listesi", "normal <C-M-CR> action list mapping")
-check(map_desc("<C-M-CR>", "i") == "LSP code action listesi", "insert <C-M-CR> action list mapping")
+check(map_desc("<M-CR>", "n") == "Add missing import (LSP)", "normal <M-CR> import mapping")
+check(map_desc("<M-CR>", "i") == "Add missing import (LSP)", "insert <M-CR> import mapping")
+check(map_desc("<C-M-CR>", "n") == "LSP code action list", "normal <C-M-CR> action list mapping")
+check(map_desc("<C-M-CR>", "i") == "LSP code action list", "insert <C-M-CR> action list mapping")
 
 finish()
