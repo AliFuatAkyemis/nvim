@@ -343,6 +343,10 @@ function M.parse(input)
   end
 
   if value:sub(1, 5):lower() == "jdbc:" then
+    local sqlite_path = value:match("^[Jj][Dd][Bb][Cc]:[Ss][Qq][Ll][Ii][Tt][Ee]:(.*)$")
+    if sqlite_path and sqlite_path ~= "" then
+      return { kind = "sqlite", dsn = "sqlite://" .. sqlite_path }
+    end
     direct = parse_direct(value:sub(6))
     if direct then
       return direct
@@ -408,6 +412,50 @@ function M.from_parts(kind, parts)
   return nil
 end
 
+---authority icindeki kullanici/parola ayiricisini bulur.
+---Parola `/ ? #` icerebildigi icin ilk `/` yetmez; her slash adayini dene.
+---@param rest string
+---@return integer|nil @ pozisyonu
+local function userinfo_at(rest)
+  local init = 1
+  while true do
+    local slash = rest:find("/", init, true)
+    local limit = slash and slash - 1 or #rest
+    local chunk = rest:sub(1, limit)
+    local at = chunk:match("^.*()@")
+    if at and not chunk:sub(at + 1):find("@", 1, true) then
+      return at
+    end
+    if not slash then
+      return nil
+    end
+    init = slash + 1
+  end
+end
+
+---DSN'den parolayi cikarir; parola ayri doner.
+---@param dsn string
+---@return string, string|nil
+function M.without_password(dsn)
+  if type(dsn) ~= "string" or dsn == "" then
+    return dsn, nil
+  end
+  local prefix, rest = dsn:match("^([%a][%w+.-]*://)(.*)$")
+  if not prefix then
+    return dsn, nil
+  end
+  local at = userinfo_at(rest)
+  if not at then
+    return dsn, nil
+  end
+  local userinfo = rest:sub(1, at - 1)
+  local user, password = userinfo:match("^([^:]*):(.*)$")
+  if not user then
+    return dsn, nil
+  end
+  return prefix .. user .. rest:sub(at), password
+end
+
 ---Authority icindeki parolayi *** ile maskeler; diger girdiler degismez.
 ---@param dsn string
 ---@return string
@@ -419,19 +467,16 @@ function M.mask(dsn)
   if not prefix then
     return dsn
   end
-  local path_index = rest:find("[/%?#]")
-  local authority = path_index and rest:sub(1, path_index - 1) or rest
-  local suffix = path_index and rest:sub(path_index) or ""
-  local at = authority:match("^.*()@")
+  local at = userinfo_at(rest)
   if not at then
     return dsn
   end
-  local userinfo = authority:sub(1, at - 1)
+  local userinfo = rest:sub(1, at - 1)
   local user = userinfo:match("^([^:]*):")
   if not user then
     return dsn
   end
-  return prefix .. user .. ":***" .. authority:sub(at) .. suffix
+  return prefix .. user .. ":***" .. rest:sub(at)
 end
 
 ---MySQL URI'sini Go surucu DSN'ine cevirir.

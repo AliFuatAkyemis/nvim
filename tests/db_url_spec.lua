@@ -43,6 +43,7 @@ parse_kind("jdbc:mysql://h/db", "mysql")
 parse_kind("mariadb://u@h/db", "mysql")
 parse_kind("sqlite:///tmp/x.db", "sqlite")
 parse_kind("file:./dev.db", "sqlite")
+parse_kind("jdbc:sqlite:/tmp/app.db", "sqlite")
 eq(
   url.parse("host=127.0.0.1 dbname=testdb user=postgres"),
   { kind = "postgres", dsn = "postgresql://postgres@127.0.0.1/testdb" },
@@ -76,6 +77,9 @@ check(url.sqlite_path("postgresql://h/db", "/proj") == nil, "sqlite olmayan dsn 
 eq(url.mask("postgresql://user:p@ss:w0rd@h/db"), "postgresql://user:***@h/db", "parolada @ ve : maskelenir")
 eq(url.mask("postgresql://u:secret@h/db@x"), "postgresql://u:***@h/db@x", "yoldaki @ maskeyi bozmaz")
 eq(url.mask("postgresql://u@h/db"), "postgresql://u@h/db", "parolasiz dsn degismez")
+eq(url.mask("postgresql://u:p/ss@h/db"), "postgresql://u:***@h/db", "parolada / maskelenir")
+eq(url.mask("postgresql://u:p?ss@h/db"), "postgresql://u:***@h/db", "parolada ? maskelenir")
+eq(url.mask("postgresql://u:p#ss@h/db"), "postgresql://u:***@h/db", "parolada # maskelenir")
 
 eq(
   url.parse("postgresql://u@h/db?ssl=true"),

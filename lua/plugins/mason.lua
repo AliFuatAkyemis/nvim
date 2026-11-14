@@ -285,8 +285,8 @@ return {
       vim.lsp.config("postgres_lsp", {
         filetypes = { "sql" },
         cmd = function(dispatchers, config)
-          local bufnr = config and config.bufnr or vim.api.nvim_get_current_buf()
-          local conn = db_detect.connection(bufnr)
+          local root = config and config.root_dir
+          local conn = db_detect.connection_for_root(root)
           return vim.lsp.rpc.start(
             { "postgres-language-server", "lsp-proxy" },
             dispatchers,
@@ -304,12 +304,13 @@ return {
       vim.lsp.config("sqls", {
         filetypes = { "sql", "mysql" },
         before_init = function(_, config)
-          local bufnr = config and config.bufnr or vim.api.nvim_get_current_buf()
-          local conn = db_detect.connection(bufnr)
+          local root = config and config.root_dir
+          local conn = db_detect.connection_for_root(root)
+          local connection = db_lsp.sqls_connection(conn)
           config.settings = config.settings or {}
           config.settings.sqls = {
             lowercaseKeywords = false,
-            connections = db_lsp.sqls_connection(conn) and { db_lsp.sqls_connection(conn) } or {},
+            connections = connection and { connection } or {},
           }
         end,
         root_dir = function(bufnr, on_dir)
@@ -326,10 +327,7 @@ return {
         group = vim.api.nvim_create_augroup("SqlDialectOverride", { clear = true }),
         pattern = "sql",
         callback = function()
-          local override = db_lsp.override(db_detect.kind(0))
-          if override then
-            vim.b.sql_type_override = override
-          end
+          vim.b.sql_type_override = db_lsp.override(db_detect.kind(0))
         end,
       })
 

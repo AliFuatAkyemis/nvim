@@ -113,6 +113,14 @@ function M.detect(root)
   end
 
   local connection = props.DB_CONNECTION and props.DB_CONNECTION:lower() or nil
+  local direct_sqlite = props.DATABASE_PATH or props.SQLITE_PATH
+  if direct_sqlite then
+    local dsn = url.from_parts("sqlite", { path = direct_sqlite })
+    if dsn then
+      return { kind = "sqlite", dsn = dsn, source = "dotenv:" .. (source or ".env") }
+    end
+  end
+
   local kind
   if connection == "pgsql" or connection == "postgres" or connection == "postgresql" then
     kind = "postgres"

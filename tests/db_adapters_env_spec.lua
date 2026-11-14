@@ -45,6 +45,13 @@ eq(dotenv.detect(fixture).kind, "mysql", "dotenv DATABASE_URL")
 eq(dotenv.detect(fixture).source, "dotenv:.env.local", "dotenv .env.local kazanir")
 eq(dotenv.lookup("DATABASE_URL", fixture), "mysql://u:p@h/db", "dotenv lookup")
 
+-- Yalnizca DATABASE_PATH varsa sqlite
+local pathed = vim.fn.tempname()
+vim.fn.mkdir(pathed, "p")
+vim.fn.writefile({ "DATABASE_PATH=/tmp/app.db" }, pathed .. "/.env.local")
+eq(dotenv.detect(pathed).kind, "sqlite", "dotenv DATABASE_PATH sqlite")
+eq(dotenv.detect(pathed).dsn, "sqlite:///tmp/app.db", "dotenv DATABASE_PATH dsn")
+
 -- Kök dışına symlink reddedilir
 local base = vim.fn.tempname()
 vim.fn.mkdir(base, "p")

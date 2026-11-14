@@ -35,6 +35,19 @@ eq(#adapters.order, 7, "yedi adaptor")
 eq(adapters.order[1], "env", "env ilk")
 eq(adapters.order[7], "compose", "compose son")
 
+-- Bozuk adaptor izolasyonu: spring hata verse de dotenv sonucu doner
+local isolated = vim.fn.tempname()
+vim.fn.mkdir(isolated, "p")
+vim.fn.writefile({ "DATABASE_URL=mysql://u:p@h/db" }, isolated .. "/.env.local")
+local real_spring = package.loaded["config.db.adapters.spring"]
+package.loaded["config.db.adapters.spring"] = {
+  detect = function()
+    error("boom")
+  end,
+}
+eq(adapters.run(isolated).kind, "mysql", "bozuk adaptor atlanir")
+package.loaded["config.db.adapters.spring"] = real_spring
+
 -- port yayinlanmamissa nil
 local noport = vim.fn.tempname()
 vim.fn.mkdir(noport, "p")

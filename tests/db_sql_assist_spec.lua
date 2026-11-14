@@ -84,6 +84,40 @@ end
 check(triggers.create, "create snippet")
 check(triggers.createtable, "createtable snippet")
 
+-- DB erisilemez: psql basarisiz olsa da statik tipler gelir
+local proj = vim.fn.tempname()
+vim.fn.mkdir(proj, "p")
+vim.fn.writefile({ "<project/>" }, proj .. "/pom.xml")
+vim.fn.writefile({ "DATABASE_URL=postgresql://u:p@127.0.0.1:1/db" }, proj .. "/.env.local")
+local fake_bin = vim.fn.tempname()
+vim.fn.mkdir(fake_bin, "p")
+local fake = fake_bin .. "/psql"
+local fh = assert(io.open(fake, "w"))
+fh:write("#!/bin/sh\nexit 1\n")
+fh:close()
+vim.uv.fs_chmod(fake, 493)
+local old_path = vim.env.PATH
+vim.env.PATH = fake_bin .. ":" .. old_path
+require("config.db.detect").invalidate()
+local buf = vim.fn.bufadd(proj .. "/m.sql")
+vim.fn.bufload(buf)
+vim.bo[buf].filetype = "sql"
+vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "create table x (", "  id " })
+local result
+src:complete({
+  context = { bufnr = buf, cursor = { row = 2, col = 0 }, cursor_before_line = "  id " },
+}, function(r)
+  result = r
+end)
+local failed_labels = {}
+for _, item in ipairs(result.items) do
+  failed_labels[item.label] = true
+end
+check(failed_labels["VARCHAR"], "psql basarisizken statik tip")
+vim.wait(300)
+vim.env.PATH = old_path
+require("config.db.detect").invalidate()
+
 io.write(("%d/%d passed\n"):format(total - failures, total))
 if failures > 0 then
   os.exit(1)

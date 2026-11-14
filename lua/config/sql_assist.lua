@@ -6,6 +6,7 @@
 
 local detect = require("config.db.detect")
 local types = require("config.db.types")
+local url = require("config.db.url")
 
 local M = {}
 
@@ -52,9 +53,15 @@ local function postgres_types(dsn)
     entry = { loading = true }
     cache[dsn] = entry
 
+    local sanitized, password = url.without_password(dsn)
+    local env = vim.fn.environ()
+    if password then
+      env.PGPASSWORD = password
+    end
+
     vim.system(
-      { "psql", dsn, "-At", "-v", "ON_ERROR_STOP=1", "-c", types.postgres_query },
-      { text = true },
+      { "psql", "-w", sanitized, "-At", "-v", "ON_ERROR_STOP=1", "-c", types.postgres_query },
+      { text = true, timeout = 5000, env = env },
       function(res)
         entry.loading = false
         entry.at = os.time()
@@ -90,6 +97,10 @@ function source:complete(params, callback)
   local names
   if conn and conn.kind == "postgres" and vim.fn.executable("psql") == 1 then
     names = postgres_types(conn.dsn)
+    if #names == 0 then
+      -- Sorgu sürüyor veya başarısız: statik listeyle devam et.
+      names = types.static("postgres")
+    end
   else
     names = types.static(conn and conn.kind or nil)
     if not conn and not M.warned then
@@ -138,6 +149,27 @@ function M.setup()
     cache = {}
     vim.notify("SQL tip onerileri yenilenecek", vim.log.levels.INFO)
   end, { desc = "SQL tip onbellegini temizle" })
+
+  -- Dosya açılışında PG tip listesini önceden ısıt.
+  local function prefetch(bufnr)
+    if vim.bo[bufnr].filetype ~= "sql" or vim.fn.executable("psql") ~= 1 then
+      return
+    end
+    local conn = detect.connection(bufnr)
+    if conn and conn.kind == "postgres" then
+      postgres_types(conn.dsn)
+    end
+  end
+
+  local group = vim.api.nvim_create_augroup("SqlTypesPrefetch", { clear = true })
+  vim.api.nvim_create_autocmd("FileType", {
+    group = group,
+    pattern = "sql",
+    callback = function(ev)
+      prefetch(ev.buf)
+    end,
+  })
+  prefetch(vim.api.nvim_get_current_buf())
 end
 
 -- Test/ileri kullanim icin kaynak sinifi

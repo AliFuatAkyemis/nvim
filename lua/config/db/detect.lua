@@ -16,6 +16,15 @@ function M.connection(bufnr)
   if not root then
     return nil
   end
+  return M.connection_for_root(root)
+end
+
+---@param root string|nil
+---@return table|nil
+function M.connection_for_root(root)
+  if not root then
+    return nil
+  end
 
   local cached = cache[root]
   if cached ~= nil then
@@ -95,7 +104,15 @@ local function refresh()
     end
   end
   vim.defer_fn(function()
-    vim.cmd("doautocmd FileType sql")
+    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+      local ft = vim.bo[bufnr].filetype
+      if ft == "sql" or ft == "mysql" then
+        vim.b[bufnr].sql_type_override = nil
+        vim.api.nvim_buf_call(bufnr, function()
+          vim.cmd("doautocmd FileType " .. ft)
+        end)
+      end
+    end
     vim.notify("DB tespiti yenilendi", vim.log.levels.INFO)
   end, 200)
 end
