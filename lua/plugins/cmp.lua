@@ -26,6 +26,24 @@ return {
       -- SQL: kendi snippet'ler (tip/fonksiyon verisi LSP'den gelir)
       require("config.sql_assist").setup()
 
+      -- Kullanıcı menüden açıkça bir öğe seçti mi? (Tab/C-n/ok tuşları)
+      -- Otomatik öne çıkan ilk öğe "seçim" sayılmaz; <CR> menüyü kapatıp
+      -- normal Enter davranışını uygular.
+      local explicitly_selected = false
+      local function mark_selected(fn)
+        return function(fallback)
+          explicitly_selected = true
+          return fn(fallback)
+        end
+      end
+
+      cmp.event:on("menu_opened", function()
+        explicitly_selected = false
+      end)
+      cmp.event:on("menu_closed", function()
+        explicitly_selected = false
+      end)
+
       cmp.setup({
         snippet = {
           expand = function(args)
@@ -41,6 +59,22 @@ return {
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<C-e>"] = cmp.mapping.abort(),
+          ["<Down>"] = mark_selected(cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })),
+          ["<Up>"] = mark_selected(cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })),
+          ["<C-n>"] = mark_selected(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+            else
+              cmp.complete()
+            end
+          end),
+          ["<C-p>"] = mark_selected(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
+            else
+              cmp.complete()
+            end
+          end),
           ["<CR>"] = cmp.mapping({
             i = function(fallback)
               local cursor = vim.api.nvim_win_get_cursor(0)
@@ -51,8 +85,14 @@ return {
                 return
               end
               local entry = cmp.get_selected_entry()
-              local entry_row = entry and entry.context and entry.context.cursor and entry.context.cursor.row
-              if entry and entry_row == cursor[1] then
+              if not explicitly_selected or not entry then
+                -- Hiçbir öğe seçilmedi: önerileri kapat, yazılanı koru.
+                cmp.abort()
+                fallback()
+                return
+              end
+              local entry_row = entry.context and entry.context.cursor and entry.context.cursor.row
+              if entry_row == cursor[1] then
                 cmp.confirm({ select = true })
                 return
               end
@@ -81,6 +121,7 @@ return {
           }),
           ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
+              explicitly_selected = true
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
@@ -90,6 +131,7 @@ return {
           end, { "i", "s" }),
           ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
+              explicitly_selected = true
               cmp.select_prev_item()
             elseif luasnip.jumpable(-1) then
               luasnip.jump(-1)
